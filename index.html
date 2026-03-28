@@ -30,6 +30,7 @@ const MiniChart = {
   },
 
   bar(id, labels, datasets, opts={}) {
+    // opts.stacked = true for stacked bars
     this.destroy(id);
     const wrap = document.getElementById(id);
     if (!wrap) return;
@@ -39,9 +40,16 @@ const MiniChart = {
     const isCount = opts.yFmt === 'count';
     const fmt = isCount ? v => v : this._fmt;
 
-    // Flatten all values to get max
-    const allVals = datasets.flatMap(d => d.data.filter(v=>v>0));
-    const maxVal = Math.max(...allVals, 1);
+    // For stacked charts, max is the sum of all series per group; otherwise max single value
+    const isStackedForMax = opts.stacked || false;
+    let maxVal;
+    if (isStackedForMax && !isHoriz) {
+      const groupSums = (datasets[0]?.data||[]).map((_,gi) => datasets.reduce((s,ds)=>s+(ds.data[gi]||0),0));
+      maxVal = Math.max(...groupSums, 1);
+    } else {
+      const allVals = datasets.flatMap(d => d.data.filter(v=>v>0));
+      maxVal = Math.max(...allVals, 1);
+    }
     const numGroups = labels.length;
     const numSeries = datasets.length;
 
@@ -49,10 +57,10 @@ const MiniChart = {
     const rect = wrap.getBoundingClientRect();
     const W = rect.width || wrap.clientWidth || wrap.parentElement?.clientWidth || 600;
     const H = rect.height || wrap.clientHeight || styleH || 220;
-    const padL = isHoriz ? 90 : 45;
+    const padL = isHoriz ? 90 : 48;
     const padR = 10;
-    const padT = 20;
-    const padB = isHoriz ? 30 : 50;
+    const padT = (opts.stacked||false) ? 30 : 20;
+    const padB = isHoriz ? 30 : 52;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
 
@@ -77,23 +85,28 @@ const MiniChart = {
     const numGridLines = 4;
     for (let i = 0; i <= numGridLines; i++) {
       const ratio = i / numGridLines;
-      const val = maxVal * (1 - ratio);
+      const valHoriz = maxVal * ratio;          // horiz: 0 on left, max on right
+      const valVert  = maxVal * (1 - ratio);    // vert:  max on top, 0 on bottom
       if (isHoriz) {
         const x = padL + ratio * plotW;
         svg.appendChild(g('line',{x1:x,y1:padT,x2:x,y2:padT+plotH,stroke:'#E8E7E3','stroke-width':0.5}));
-        svg.appendChild(txt(x, padT+plotH+12, fmt(val), {'text-anchor':'middle'}));
+        svg.appendChild(txt(x, padT+plotH+12, fmt(valHoriz), {'text-anchor':'middle'}));
       } else {
         const y = padT + ratio * plotH;
         svg.appendChild(g('line',{x1:padL,y1:y,x2:padL+plotW,y2:y,stroke:'#E8E7E3','stroke-width':0.5}));
-        svg.appendChild(txt(padL-4, y+3, fmt(val), {'text-anchor':'end'}));
+        svg.appendChild(txt(padL-4, y+3, fmt(valVert), {'text-anchor':'end'}));
       }
     }
 
     // Bars
+    const isStacked = opts.stacked || false;
     const groupW = isHoriz ? plotH/numGroups : plotW/numGroups;
-    const barW = Math.max(2, (groupW * 0.8) / numSeries);
-    const barGap = groupW * 0.1;
+    const barW = isStacked ? Math.max(4, groupW * 0.7) : Math.max(2, (groupW * 0.8) / numSeries);
+    const barGap = isStacked ? groupW * 0.15 : groupW * 0.1;
     const tip = this._tooltip(wrap, '');
+
+    // For stacked: track cumulative heights per group
+    const stackBase = new Array(labels.length).fill(0);
 
     datasets.forEach((ds, si) => {
       ds.data.forEach((val, gi) => {
@@ -103,15 +116,16 @@ const MiniChart = {
         if (isHoriz) {
           bw = ratio * plotW;
           bh = Math.max(2, barW - 1);
-          x = padL;
-          y = padT + gi * groupW + barGap + si * barW;
+          x = padL + (isStacked ? stackBase[gi] * plotW : 0);
+          y = padT + gi * groupW + barGap + (isStacked ? 0 : si * barW);
         } else {
-          bw = Math.max(2, barW - 1);
+          bw = Math.max(3, barW - 1);
           bh = ratio * plotH;
-          x = padL + gi * groupW + barGap + si * barW;
-          y = padT + plotH - bh;
+          x = padL + gi * groupW + barGap + (isStacked ? 0 : si * barW);
+          y = padT + plotH - bh - (isStacked ? stackBase[gi] * plotH : 0);
         }
-        const rect = g('rect',{x,y,width:bw,height:bh,fill:ds.backgroundColor||'#378ADD',rx:2});
+        if (isStacked) stackBase[gi] += ratio;
+        const rect = g('rect',{x,y,width:bw,height:bh,fill:ds.backgroundColor||'#378ADD',rx:si===0&&isStacked?'0 0 2 2':2});
         rect.addEventListener('mousemove', e => {
           const box = wrap.getBoundingClientRect();
           tip.style.left = (e.clientX - box.left + 10) + 'px';
@@ -273,8 +287,8 @@ const MiniChart = {
 };
 
 // Compatibility shims to match old Chart.js API calls
-function bar(id,labels,datasets,yFmt){
-  MiniChart.bar(id,labels,datasets,{yFmt,horizontal:false});
+function bar(id,labels,datasets,yFmt,extraOpts={}){
+  MiniChart.bar(id,labels,datasets,{yFmt,horizontal:false,...extraOpts});
 }
 function barH(id,labels,datasets,yFmt){
   MiniChart.bar(id,labels,datasets,{yFmt,horizontal:true});
@@ -499,15 +513,15 @@ function renderOverview(){
   <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-header"><div class="chart-title">New pipeline added by month — created date</div></div>
-      <div class="note">2026 Q1 only (Jan–Mar) vs 2025 full year</div>
-      <div class="legend"><span><span class="ld" style="background:#9FE1CB"></span>Affiliated 2025</span><span><span class="ld" style="background:#378ADD"></span>Affiliated 2026</span><span><span class="ld" style="background:#EF9F27"></span>Co-sell 2025</span><span><span class="ld" style="background:#1D9E75"></span>Co-sell 2026</span></div>
-      <div style="position:relative;height:210px"><div id="ov-created" style="width:100%;height:100%"></div></div>
+      <div class="note">Stacked: Affiliated (bottom) + Co-sell (top) · Blues = 2025 · Greens = 2026</div>
+      <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>Affiliated 2025</span><span><span class="ld" style="background:#1D6FAE"></span>Co-sell 2025</span><span><span class="ld" style="background:#6EE7B7"></span>Affiliated 2026</span><span><span class="ld" style="background:#059669"></span>Co-sell 2026</span></div>
+      <div style="position:relative;height:280px"><div id="ov-created" style="width:100%;height:100%"></div></div>
     </div>
     <div class="chart-card">
       <div class="chart-header"><div class="chart-title">Won revenue by close month</div></div>
-      <div class="note">2026 Jan–Mar actual · 2025 full year</div>
-      <div class="legend"><span><span class="ld" style="background:#9FE1CB"></span>Affiliated 2025</span><span><span class="ld" style="background:#378ADD"></span>Affiliated 2026</span><span><span class="ld" style="background:#EF9F27"></span>Co-sell 2025</span><span><span class="ld" style="background:#1D9E75"></span>Co-sell 2026</span></div>
-      <div style="position:relative;height:210px"><div id="ov-won" style="width:100%;height:100%"></div></div>
+      <div class="note">Stacked: Affiliated (bottom) + Co-sell (top) · Blues = 2025 · Greens = 2026</div>
+      <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>Affiliated 2025</span><span><span class="ld" style="background:#1D6FAE"></span>Co-sell 2025</span><span><span class="ld" style="background:#6EE7B7"></span>Affiliated 2026</span><span><span class="ld" style="background:#059669"></span>Co-sell 2026</span></div>
+      <div style="position:relative;height:280px"><div id="ov-won" style="width:100%;height:100%"></div></div>
     </div>
   </div>
   <div class="chart-full">
@@ -521,9 +535,11 @@ function renderOverview(){
     </div>
     <div class="note" id="ov-tr-note">Monthly pipeline added (created date) · 2025 full year + 2026 Q1 · arrows show month-over-month direction</div>
     <div class="legend">
-      <span><span style="display:inline-block;width:24px;height:3px;background:#378ADD;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Affiliated</span>
-      <span><span style="display:inline-block;width:24px;height:3px;background:#1D9E75;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Co-sell</span>
-      <span><span style="color:#1D9E75;font-weight:700;font-size:14px">↑</span> MoM up</span>
+      <span><span style="display:inline-block;width:24px;height:3px;background:#93C5FD;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Affiliated 2025</span>
+      <span><span style="display:inline-block;width:24px;height:3px;background:#1D6FAE;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Co-sell 2025</span>
+      <span><span style="display:inline-block;width:24px;height:3px;background:#6EE7B7;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Affiliated 2026</span>
+      <span><span style="display:inline-block;width:24px;height:3px;background:#059669;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Co-sell 2026</span>
+      <span><span style="color:#059669;font-weight:700;font-size:14px">↑</span> MoM up</span>
       <span><span style="color:#D85A30;font-weight:700;font-size:14px">↓</span> MoM down</span>
     </div>
     <div style="position:relative;height:270px"><div id="ov-trend" style="width:100%;height:100%"></div></div>
@@ -539,71 +555,64 @@ function renderOverview(){
     </div>
   </div>`;
 
-  const ck=sortedUnion(MD.pipe_created_rev.aff25,MD.pipe_created_rev.aff26,MD.pipe_created_rev.cs25,MD.pipe_created_rev.cs26);
-  bar('ov-created',ck.map(mLabel),[
-    {label:'Affiliated 2025',data:ck.map(k=>MD.pipe_created_rev.aff25[k]||0),backgroundColor:'#9FE1CB',borderRadius:2},
-    {label:'Affiliated 2026',data:ck.map(k=>MD.pipe_created_rev.aff26[k]||0),backgroundColor:'#378ADD',borderRadius:2},
-    {label:'Co-sell 2025',data:ck.map(k=>MD.pipe_created_rev.cs25[k]||0),backgroundColor:'#EF9F27',borderRadius:2},
-    {label:'Co-sell 2026',data:ck.map(k=>MD.pipe_created_rev.cs26[k]||0),backgroundColor:'#1D9E75',borderRadius:2},
-  ]);
-  const wk=sortedUnion(MD.won_rev.aff25,MD.won_rev.aff26,MD.won_rev.cs25,MD.won_rev.cs26);
-  bar('ov-won',wk.map(mLabel),[
-    {label:'Affiliated 2025',data:wk.map(k=>MD.won_rev.aff25[k]||0),backgroundColor:'#9FE1CB',borderRadius:2},
-    {label:'Affiliated 2026',data:wk.map(k=>MD.won_rev.aff26[k]||0),backgroundColor:'#378ADD',borderRadius:2},
-    {label:'Co-sell 2025',data:wk.map(k=>MD.won_rev.cs25[k]||0),backgroundColor:'#EF9F27',borderRadius:2},
-    {label:'Co-sell 2026',data:wk.map(k=>MD.won_rev.cs26[k]||0),backgroundColor:'#1D9E75',borderRadius:2},
-  ]);
+  // Stacked Jan-Dec: merge 2025-MM and 2026-MM keys by month index
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function byMonth(src, yr) {
+    return MON.map((_,i)=>{
+      const k=`${yr}-${String(i+1).padStart(2,'0')}`;
+      return src[k]||0;
+    });
+  }
+  bar('ov-created', MON, [
+    {label:'Affiliated 2025', data:byMonth(MD.pipe_created_rev.aff25,'2025'), backgroundColor:'#93C5FD'},
+    {label:'Co-sell 2025',    data:byMonth(MD.pipe_created_rev.cs25,'2025'),  backgroundColor:'#1D6FAE'},
+    {label:'Affiliated 2026', data:byMonth(MD.pipe_created_rev.aff26,'2026'), backgroundColor:'#6EE7B7'},
+    {label:'Co-sell 2026',    data:byMonth(MD.pipe_created_rev.cs26,'2026'),  backgroundColor:'#059669'},
+  ], 'rev', {stacked:true});
+  bar('ov-won', MON, [
+    {label:'Affiliated 2025', data:byMonth(MD.won_rev.aff25,'2025'), backgroundColor:'#93C5FD'},
+    {label:'Co-sell 2025',    data:byMonth(MD.won_rev.cs25,'2025'),  backgroundColor:'#1D6FAE'},
+    {label:'Affiliated 2026', data:byMonth(MD.won_rev.aff26,'2026'), backgroundColor:'#6EE7B7'},
+    {label:'Co-sell 2026',    data:byMonth(MD.won_rev.cs26,'2026'),  backgroundColor:'#059669'},
+  ], 'rev', {stacked:true});
   const pp={};['aff26','cs26','dr26'].forEach(k=>Object.entries(MD.partner_rev[k]).forEach(([p,v])=>{pp[p]=(pp[p]||0)+v}));
   const ppS=Object.entries(pp).sort((a,b)=>b[1]-a[1]).slice(0,7);
-  barH('ov-pp',ppS.map(x=>x[0]),[{data:ppS.map(x=>x[1]),backgroundColor:COLORS,borderRadius:4}]);
+  barH('ov-pp',ppS.map(x=>x[0]),[{data:ppS.map(x=>x[1]),backgroundColor:'#378ADD',borderRadius:4}]);
   const wp={};['won_aff26','won_cs26'].forEach(k=>Object.entries(MD.partner_rev[k]).forEach(([p,v])=>{wp[p]=(wp[p]||0)+v}));
   const wpS=Object.entries(wp).sort((a,b)=>b[1]-a[1]).slice(0,7);
-  barH('ov-wp',wpS.map(x=>x[0]),[{data:wpS.map(x=>x[1]),backgroundColor:COLORS,borderRadius:4}]);
+  barH('ov-wp',wpS.map(x=>x[0]),[{data:wpS.map(x=>x[1]),backgroundColor:'#059669',borderRadius:4}]);
 
-  // ── Trend line chart ──────────────────────────────────────────────────────
-  // Build combined key set: 2025 monthly + 2026 Q1 for all sources
-  const TREND_DATA = {
-    pipeline: {
-      aff: sortedUnion(MD.pipe_created_rev.aff25, MD.pipe_created_rev.aff26),
-      cs:  sortedUnion(MD.pipe_created_rev.cs25,  MD.pipe_created_rev.cs26),
-      affSrc25: MD.pipe_created_rev.aff25, affSrc26: MD.pipe_created_rev.aff26,
-      csSrc25:  MD.pipe_created_rev.cs25,  csSrc26:  MD.pipe_created_rev.cs26,
-      note: 'Monthly pipeline added (created date) · 2025 full year + 2026 Q1'
-    },
-    close: {
-      aff: sortedUnion(MD.pipe_close_rev.aff25, MD.pipe_close_rev.aff26),
-      cs:  sortedUnion(MD.pipe_close_rev.cs25,  MD.pipe_close_rev.cs26),
-      affSrc25: MD.pipe_close_rev.aff25, affSrc26: MD.pipe_close_rev.aff26,
-      csSrc25:  MD.pipe_close_rev.cs25,  csSrc26:  MD.pipe_close_rev.cs26,
-      note: 'Open pipeline by estimated close month · 2025 still-open + 2026 open deals'
-    },
-    won: {
-      aff: sortedUnion(MD.won_rev.aff25, MD.won_rev.aff26),
-      cs:  sortedUnion(MD.won_rev.cs25,  MD.won_rev.cs26),
-      affSrc25: MD.won_rev.aff25, affSrc26: MD.won_rev.aff26,
-      csSrc25:  MD.won_rev.cs25,  csSrc26:  MD.won_rev.cs26,
-      note: 'Won revenue by actual close month · 2025 full year + 2026 Jan–Mar'
-    }
+  // ── Trend line chart — Jan–Dec, 4 lines, 2 blues / 2 greens ────────────────
+  const TREND_SOURCES = {
+    pipeline: { aff25: MD.pipe_created_rev.aff25, cs25: MD.pipe_created_rev.cs25, aff26: MD.pipe_created_rev.aff26, cs26: MD.pipe_created_rev.cs26, note: 'Monthly pipeline added (created date) · Blues = 2025 · Greens = 2026' },
+    close:    { aff25: MD.pipe_close_rev.aff25,   cs25: MD.pipe_close_rev.cs25,   aff26: MD.pipe_close_rev.aff26,   cs26: MD.pipe_close_rev.cs26,   note: 'Open pipeline by estimated close month · Blues = 2025 · Greens = 2026' },
+    won:      { aff25: MD.won_rev.aff25,           cs25: MD.won_rev.cs25,           aff26: MD.won_rev.aff26,          cs26: MD.won_rev.cs26,           note: 'Won revenue by close month · Blues = 2025 · Greens = 2026' },
   };
-  window._trendData = TREND_DATA;
+  window._trendSources = TREND_SOURCES;
   buildTrendChart('pipeline');
 }
 
 function buildTrendChart(mode) {
-  const td = window._trendData[mode];
-  const allKeys = sortedUnion(td.affSrc25, td.affSrc26, td.csSrc25, td.csSrc26);
-  const labels = allKeys.map(mLabel);
-  const affData = allKeys.map(k => td.affSrc26[k] || td.affSrc25[k] || 0);
-  const csData  = allKeys.map(k => td.csSrc26[k]  || td.csSrc25[k]  || 0);
+  const src = window._trendSources[mode];
+  // Jan–Dec labels, merge 2025 and 2026 by month number
+  const MON_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function mByIdx(obj, yr) {
+    return MON_LABELS.map((_,i) => obj[`${yr}-${String(i+1).padStart(2,'0')}`] || 0);
+  }
+  const aff25 = mByIdx(src.aff25, '2025');
+  const cs25  = mByIdx(src.cs25,  '2025');
+  const aff26 = mByIdx(src.aff26, '2026');
+  const cs26  = mByIdx(src.cs26,  '2026');
 
-  // Update note text
   const noteEl = document.getElementById('ov-tr-note');
-  if (noteEl) noteEl.textContent = td.note;
+  if (noteEl) noteEl.textContent = src.note;
 
   dc('ov-trend');
-  MiniChart.line('ov-trend', labels, [
-    { label:'Affiliated', data:affData, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.08)', fill:true },
-    { label:'Co-sell',    data:csData,  borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.06)', fill:true },
+  MiniChart.line('ov-trend', MON_LABELS, [
+    { label:'Affiliated 2025', data:aff25, borderColor:'#93C5FD', backgroundColor:'rgba(147,197,253,0.12)', fill:true },
+    { label:'Co-sell 2025',    data:cs25,  borderColor:'#1D6FAE', backgroundColor:'rgba(29,111,174,0.08)',  fill:true },
+    { label:'Affiliated 2026', data:aff26, borderColor:'#6EE7B7', backgroundColor:'rgba(110,231,183,0.12)', fill:true },
+    { label:'Co-sell 2026',    data:cs26,  borderColor:'#059669', backgroundColor:'rgba(5,150,105,0.08)',   fill:true },
   ]);
 }
 
@@ -709,23 +718,27 @@ function dealTblHTML(deals){
 // ── DEALS REGISTERED V2 ───────────────────────────────────────────────────────
 // Data: 94 open 2026, 139 open 2025, 1 won 2026, 32 won 2025
 const DR2 = {
-  // Registrations by partner x month (deal count)
+  // Named partner x month — 2026: all 94 assigned (Affiliated + Co-sell combined)
   reg_pm_26: {
-    'Microsoft':   {'2026-01':7, '2026-02':1, '2026-03':4},
-    'Confluent':   {'2026-01':3, '2026-03':3},
-    'Google Cloud':{'2026-01':3, '2026-02':1, '2026-03':2},
+    'Microsoft':   {'2026-01':37,'2026-02':24,'2026-03':10},
+    'Google Cloud':{'2026-01':3, '2026-02':3, '2026-03':3},
+    'Confluent':   {'2026-01':3, '2026-03':4},
     'Databricks':  {'2026-01':2, '2026-02':1, '2026-03':1},
-    'Snowflake':   {'2026-01':1}},
+    'Snowflake':   {'2026-01':1, '2026-02':1},
+    'Amazon AWS':  {'2026-03':1},
+  },
+  // Named partner x month — 2025: all 139 assigned
   reg_pm_25: {
-    'Microsoft':   {'2025-01':3,'2025-03':15,'2025-04':7,'2025-05':7,'2025-11':2},
-    'Confluent':   {'2025-01':3,'2025-02':2,'2025-04':19,'2025-05':1,'2025-06':2,'2025-07':3,'2025-08':1},
+    'Microsoft':   {'2025-01':7,'2025-02':8,'2025-03':19,'2025-04':9,'2025-05':7,'2025-06':4,'2025-11':2,'2025-12':4},
+    'Confluent':   {'2025-01':3,'2025-02':2,'2025-04':20,'2025-05':1,'2025-06':2,'2025-07':3,'2025-08':1},
     'Google Cloud':{'2025-02':2,'2025-03':1,'2025-04':12,'2025-05':6},
-    'Amazon AWS':  {'2025-03':1,'2025-04':8,'2025-05':1},
+    'Amazon AWS':  {'2025-03':2,'2025-04':12,'2025-05':2},
     'Snowflake':   {'2025-03':6},
-    'Databricks':  {'2025-08':1,'2025-10':2}},
-  // Monthly totals
+    'Databricks':  {'2025-08':1,'2025-10':3},
+  },
+  // Monthly totals (all deals)
   monthly_26: {'2026-01':46,'2026-02':29,'2026-03':19},
-  monthly_25: {'2025-01':10,'2025-02':12,'2025-03':28,'2025-04':53,'2025-05':17,'2025-06':6,'2025-07':3,'2025-08':2,'2025-10':2,'2025-11':2,'2025-12':4},
+  monthly_25: {'2025-01':10,'2025-02':12,'2025-03':28,'2025-04':53,'2025-05':16,'2025-06':6,'2025-07':3,'2025-08':2,'2025-10':3,'2025-11':2,'2025-12':4},
   // Close rates
   close_rate: {
     reg_26: 1.1, reg_25: 18.7,
@@ -738,8 +751,8 @@ const DR2 = {
   won_monthly_25: {'2025-01':2,'2025-02':2,'2025-04':3,'2025-05':7,'2025-06':3,'2025-07':5,'2025-08':2,'2025-10':1,'2025-11':2,'2025-12':3},
   won_monthly_26: {'2026-03':1},
   // Partner totals (open)
-  partner_open_26: {'Microsoft':12,'Google Cloud':6,'Confluent':6,'Databricks':4,'Snowflake':1},
-  partner_open_25: {'Microsoft':34,'Confluent':31,'Google Cloud':21,'Amazon AWS':10,'Snowflake':6,'Databricks':3},
+  partner_open_26: {'Microsoft':71,'Google Cloud':9,'Confluent':7,'Databricks':4,'Snowflake':2,'Amazon AWS':1},
+  partner_open_25: {'Microsoft':60,'Confluent':32,'Google Cloud':21,'Amazon AWS':16,'Snowflake':6,'Databricks':4},
   partner_won_26: {'Microsoft':1},
   partner_won_25: {'Google Cloud':8,'Confluent':3,'Microsoft':3,'Amazon AWS':1}};
 
@@ -994,8 +1007,8 @@ function renderDR2Tab() {
         <button class="tog on" id="cr-all-btn" onclick="togCloseRate('all')">All registrations</button>
         <button class="tog" id="cr-named-btn" onclick="togCloseRate('named')">Named partners only</button>
       </div>
-      <div id="cr-note-all" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic">Includes all registrations — 65 of 94 (2026) and 34 of 139 (2025) have no partner assigned</div>
-      <div id="cr-note-named" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic;display:none">Named partners only — excludes unassigned deals. More accurate reflection of actual partner-engaged registrations</div>
+      <div id="cr-note-all" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic">All 94 (2026) and 139 (2025) deals now have a partner assigned — corrected from earlier export</div>
+      <div id="cr-note-named" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic;display:none">All registrations have a named partner — named-only view is the same as all registrations</div>
     </div>
     <div class="charts-grid" style="margin-bottom:0">
       <div>
