@@ -385,6 +385,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
     <button class="nav-tab" onclick="gotoTab('dealsreg2')">Deals registered</button>
     <button class="nav-tab" onclick="gotoTab('dealexp')">Deal explorer</button>
     <button class="nav-tab" onclick="gotoTab('contacts')">Partner contacts added</button>
+    <button class="nav-tab" onclick="gotoTab('mktcal')">Marketing calendar</button>
   </div>
   <div id="tab-overview"></div>
   <div id="tab-affiliated" style="display:none"></div>
@@ -393,6 +394,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
   <div id="tab-dealexp" style="display:none"></div>
   <div id="tab-dealsreg2" style="display:none"></div>
   <div id="tab-contacts" style="display:none"></div>
+  <div id="tab-mktcal" style="display:none"></div>
 </div>
 <script>
 function fmt(v){if(!v||v===0)return'$0';return'$'+(v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':Math.round(v).toString())}
@@ -965,7 +967,7 @@ function renderDR2Tab() {
   ])}
   <div style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:12px 16px;margin-bottom:1.25rem;font-size:12px;color:#5A4010;line-height:1.6">
     <strong>⚠ Data caveat — 2025 registration volume is overstated.</strong>
-    In Q1 2025, prior team members registered every tagged deal rather than applying the intended ~25% threshold. This inflates the 2025 registration count and suppresses the apparent close rate. 2026 registrations reflect the corrected process. Year-over-year comparisons should be interpreted with this in mind.
+    In Q1 2025, prior team members registered every tagged deal irregardless of deal quality. For instance, our partners don't co-sell on staff aug roles. This inflates the 2025 registration count and suppresses the apparent close rate. 2026 registrations reflect the corrected process. Year-over-year comparisons should be interpreted with this in mind.
   </div>
 
   <div class="chart-full">
@@ -1031,7 +1033,7 @@ function renderDR2Tab() {
   barH('dr2-partner', allP, [
     {label:'2025', data:allP.map(p=>DR2.partner_open_25[p]||0), backgroundColor:'#9FE1CB', borderRadius:3},
     {label:'2026', data:allP.map(p=>DR2.partner_open_26[p]||0), backgroundColor:'#378ADD', borderRadius:3},
-  ]);
+  ], 'count');
   renderCloseRateBars('all');
 }
 
@@ -1183,8 +1185,270 @@ function togCloseRate(mode) {
   renderCloseRateBars(mode);
 }
 
+
+// ── PARTNER MARKETING CALENDAR ────────────────────────────────────────────────
+const MKT_ACTIVITIES = [
+  {type:"Event",   partner:"Microsoft",     activity:"Partner AgentReady Event NYC",              enterprise:"",              start:"2026-01-12",end:"2026-01-12"},
+  {type:"Campaign",partner:"Microsoft",     activity:"Mini CSP Campaign - Enterprise",            enterprise:"",              start:"2026-01-19",end:"2026-02-09"},
+  {type:"Campaign",partner:"Microsoft",     activity:"Get To Know Improving",                     enterprise:"Global",        start:"2026-01-19",end:"2026-02-09"},
+  {type:"Campaign",partner:"Google",        activity:"GoTogether - January",                      enterprise:"Global",        start:"2026-01-19",end:"2026-01-19"},
+  {type:"Campaign",partner:"Google",        activity:"Google AI & Data Campaign",                 enterprise:"",              start:"2026-02-02",end:"2026-03-30"},
+  {type:"Campaign",partner:"Google",        activity:"GOOG Research Accelerator Portal Campaign", enterprise:"",              start:"2026-02-02",end:"2026-03-02"},
+  {type:"Campaign",partner:"Microsoft",     activity:"GoTogether - February",                     enterprise:"Global",        start:"2026-02-16",end:"2026-02-16"},
+  {type:"Ad",      partner:"Google",        activity:"Edmonton AI Luncheon (ad)",                 enterprise:"Calgary",       start:"2026-03-02",end:"2026-04-06"},
+  {type:"Ad",      partner:"Google",        activity:"Research Accelerator Portal (ad)",          enterprise:"Ottawa",        start:"2026-03-02",end:"2026-03-30"},
+  {type:"Campaign",partner:"Microsoft",     activity:"GoTogether - March (AWS)",                  enterprise:"Global",        start:"2026-03-16",end:"2026-03-16"},
+  {type:"Event",   partner:"Microsoft",     activity:"Fabric Community Conference (FabCon)",      enterprise:"Global",        start:"2026-03-16",end:"2026-03-16"},
+  {type:"Event",   partner:"Microsoft",     activity:"CoSelling Partner Showcase - East",         enterprise:"Las Colinas",   start:"2026-03-23",end:"2026-03-23"},
+  {type:"Campaign",partner:"Microsoft",     activity:"MSFT Data & Analytics Campaign",            enterprise:"Global",        start:"2026-03-23",end:"2026-06-29"},
+  {type:"Event",   partner:"Google",        activity:"GOOG Edmonton Public Sector Luncheon",      enterprise:"",              start:"2026-04-06",end:"2026-04-06"},
+  {type:"Campaign",partner:"Databricks",    activity:"GoTogether - April",                        enterprise:"Global",        start:"2026-04-20",end:"2026-04-20"},
+  {type:"Event",   partner:"Google",        activity:"Google Next 2026",                          enterprise:"",              start:"2026-04-27",end:"2026-04-27"},
+  {type:"Event",   partner:"SAP",           activity:"SAP SAPPHIRE - Orlando",                   enterprise:"Orlando/Global", start:"2026-05-11",end:"2026-05-11"},
+  {type:"Campaign",partner:"SAP",           activity:"GoTogether - May",                          enterprise:"Global",        start:"2026-05-18",end:"2026-05-18"},
+  {type:"Event",   partner:"Microsoft",     activity:"Microsoft AI Tour (Houston)",               enterprise:"Houston",       start:"2026-05-25",end:"2026-05-25"},
+  {type:"Campaign",partner:"Confluent",     activity:"CFLT + Improving Mainframe Migration",      enterprise:"Global",        start:"2026-03-02",end:"2026-05-25"},
+  {type:"Event",   partner:"Databricks/SAP",activity:"Databricks Summit",                        enterprise:"SF/Global",     start:"2026-06-15",end:"2026-06-15"},
+  {type:"Campaign",partner:"Snowflake",     activity:"GoTogether - June",                         enterprise:"Global",        start:"2026-06-15",end:"2026-06-15"},
+  {type:"Campaign",partner:"Google",        activity:"GOOG H2 Campaign",                          enterprise:"",              start:"2026-07-06",end:"2026-12-28"},
+  {type:"Campaign",partner:"Microsoft",     activity:"GoTogether - July",                         enterprise:"Global",        start:"2026-07-20",end:"2026-07-20"},
+  {type:"Campaign",partner:"AWS",           activity:"GoTogether - August",                       enterprise:"Global",        start:"2026-08-17",end:"2026-08-17"},
+  {type:"Event",   partner:"SAP",           activity:"SAP4U - ASUG Conference",                  enterprise:"Colorado/Global",start:"2026-09-07",end:"2026-09-07"},
+  {type:"Campaign",partner:"Microsoft",     activity:"MSFT AI Campaign",                          enterprise:"Global",        start:"2026-09-07",end:"2026-12-14"},
+  {type:"Event",   partner:"Databricks",    activity:"Data + AI World Tour - Atlanta",            enterprise:"Atlanta",       start:"2026-09-28",end:"2026-09-28"},
+  {type:"Campaign",partner:"Confluent",     activity:"GoTogether - September",                    enterprise:"Global",        start:"2026-09-21",end:"2026-09-21"},
+  {type:"Event",   partner:"SAP",           activity:"SAP ASUG Oil & Gas",                       enterprise:"Houston/Global", start:"2026-10-05",end:"2026-10-05"},
+  {type:"Campaign",partner:"Microsoft",     activity:"GoTogether - October",                      enterprise:"Global",        start:"2026-10-19",end:"2026-10-19"},
+  {type:"Event",   partner:"Databricks",    activity:"Data + AI World Tour - Toronto",            enterprise:"Toronto",       start:"2026-10-26",end:"2026-10-26"},
+  {type:"Event",   partner:"SAP",           activity:"NARUC Annual Conference",                   enterprise:"Puerto Rico",   start:"2026-11-16",end:"2026-11-16"},
+  {type:"Event",   partner:"Databricks",    activity:"Data + AI World Tour - Chicago",            enterprise:"Chicago",       start:"2026-11-16",end:"2026-11-16"},
+  {type:"Campaign",partner:"Google",        activity:"GoTogether - November",                     enterprise:"Global",        start:"2026-11-16",end:"2026-11-16"},
+  {type:"Campaign",partner:"AWS",           activity:"GoTogether - December",                     enterprise:"Global",        start:"2026-12-21",end:"2026-12-21"},
+];
+
+const PARTNER_COLORS = {
+  'Microsoft':    {bg:'#dbeafe',border:'#3b82f6',text:'#1e3a8a'},
+  'Google':       {bg:'#fef9c3',border:'#eab308',text:'#713f12'},
+  'AWS':          {bg:'#ffedd5',border:'#f97316',text:'#7c2d12'},
+  'Databricks':   {bg:'#fee2e2',border:'#ef4444',text:'#7f1d1d'},
+  'SAP':          {bg:'#e0f2fe',border:'#0ea5e9',text:'#0c4a6e'},
+  'Snowflake':    {bg:'#e0f7fa',border:'#06b6d4',text:'#155e75'},
+  'Confluent':    {bg:'#fce7f3',border:'#ec4899',text:'#831843'},
+  'Databricks/SAP':{bg:'#ede9fe',border:'#8b5cf6',text:'#4c1d95'},
+  'default':      {bg:'#f1f5f9',border:'#94a3b8',text:'#1e293b'},
+};
+
+const TYPE_ICONS = { Event:'📍', Campaign:'📣', Ad:'🎯', Other:'📌' };
+const PARTNER_ABBREV = {
+  'Microsoft':'MSFT', 'Google':'GOOG', 'AWS':'AWS', 'Databricks':'DBX',
+  'SAP':'SAP', 'Snowflake':'SFLK', 'Confluent':'CFLNT', 'Databricks/SAP':'DBX/SAP',
+};
+function partnerAbbrev(p) {
+  for (const [k,v] of Object.entries(PARTNER_ABBREV)) {
+    if (p.includes(k)) return v;
+  }
+  return p.substring(0,5);
+}
+
+function getPartnerColor(partner) {
+  for (const [key, val] of Object.entries(PARTNER_COLORS)) {
+    if (partner.includes(key)) return val;
+  }
+  return PARTNER_COLORS.default;
+}
+
+function renderMktCal() {
+  const el = document.getElementById('tab-mktcal');
+
+  // Count by type and partner
+  const byType = {};
+  const byPartner = {};
+  MKT_ACTIVITIES.forEach(a => {
+    byType[a.type] = (byType[a.type]||0) + 1;
+    const pk = a.partner.split('/')[0];
+    byPartner[pk] = (byPartner[pk]||0) + 1;
+  });
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_STARTS = months.map((_,i) => `2026-${String(i+1).padStart(2,'0')}-01`);
+  const MONTH_ENDS   = ['2026-01-31','2026-02-28','2026-03-31','2026-04-30','2026-05-31',
+                        '2026-06-30','2026-07-31','2026-08-31','2026-09-30','2026-10-31','2026-11-30','2026-12-31'];
+
+  // State
+  let filterPartner = 'All';
+  let filterType = 'All';
+  let viewMode = 'gantt'; // 'gantt' or 'list'
+
+  function getFiltered() {
+    const s = window._mktCalState || {};
+    const fp = s.filterPartner || 'All';
+    const ft = s.filterType    || 'All';
+    return MKT_ACTIVITIES.filter(a => {
+      if (fp !== 'All' && !a.partner.includes(fp)) return false;
+      if (ft !== 'All' && a.type !== ft) return false;
+      return true;
+    });
+  }
+
+  function renderGantt() {
+    const acts = getFiltered();
+    const yearStart = new Date('2026-01-01').getTime();
+    const yearEnd   = new Date('2026-12-31').getTime();
+    const yearSpan  = yearEnd - yearStart;
+
+    let html = `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:700px;table-layout:fixed">
+      <colgroup><col style="width:170px">${months.map(()=>'<col>').join('')}</colgroup>
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;font-size:11px;color:#888780;border-bottom:2px solid #D3D1C7;text-transform:uppercase;letter-spacing:.04em">Activity</th>
+        ${months.map(m=>`<th style="text-align:center;padding:4px 2px;font-size:10px;color:#888780;border-bottom:2px solid #D3D1C7;font-weight:600">${m}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+    acts.forEach((a, i) => {
+      const c = getPartnerColor(a.partner);
+      const icon = TYPE_ICONS[a.type] || '📌';
+      const start = new Date(a.start).getTime();
+      const end   = new Date(a.end).getTime() + 86400000 * 6; // extend to end of week
+
+      html += `<tr style="border-bottom:1px solid #EEEDEA;${i%2===0?'':'background:#fafaf8'}">
+        <td style="padding:5px 8px;font-size:11px;color:#1a1a18;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px" title="${a.activity}">
+          <span style="font-size:10px">${icon}</span> ${a.activity}
+          ${a.enterprise ? `<div style="font-size:9px;color:#888780">${a.enterprise}</div>` : ''}
+        </td>`;
+
+      months.forEach((_, mi) => {
+        const mStart = new Date(MONTH_STARTS[mi]).getTime();
+        const mEnd   = new Date(MONTH_ENDS[mi]).getTime() + 86400000;
+        const overlap = start < mEnd && end > mStart;
+        if (overlap) {
+          const isFirst = start >= mStart && start < mEnd;
+          const isLast  = end   >= mStart && end   < mEnd + 86400000;
+          const br = `border-radius:${isFirst?'6px':0} ${isLast?'6px':0} ${isLast?'6px':0} ${isFirst?'6px':0}`;
+          const abbrev = partnerAbbrev(a.partner);
+          html += `<td style="padding:3px 2px">
+            <div title="${a.activity} · ${a.partner}" style="height:20px;background:${c.bg};border-top:1.5px solid ${c.border};border-bottom:1.5px solid ${c.border};${isFirst?'border-left:1.5px solid '+c.border+';':''}${isLast?'border-right:1.5px solid '+c.border+';':''};${br};display:flex;align-items:center;justify-content:center;font-size:9px;color:${c.text};font-weight:600;cursor:default;white-space:nowrap;overflow:hidden;padding:0 3px">
+              ${abbrev}
+            </div>
+          </td>`;
+        } else {
+          html += `<td></td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    document.getElementById('mktcal-view').innerHTML = html;
+  }
+
+  function renderList() {
+    const acts = getFiltered().sort((a,b) => a.start.localeCompare(b.start));
+    const grouped = {};
+    acts.forEach(a => {
+      const m = a.start.slice(0,7);
+      if (!grouped[m]) grouped[m] = [];
+      grouped[m].push(a);
+    });
+
+    let html = '';
+    Object.entries(grouped).sort().forEach(([month, items]) => {
+      const d = new Date(month+'-01');
+      const label = d.toLocaleString('en',{month:'long',year:'numeric'});
+      html += `<div style="margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #D3D1C7">${label}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">`;
+      items.forEach(a => {
+        const c = getPartnerColor(a.partner);
+        const icon = TYPE_ICONS[a.type] || '📌';
+        const isSingleDay = a.start === a.end;
+        const dateStr = isSingleDay
+          ? new Date(a.start).toLocaleDateString('en',{month:'short',day:'numeric'})
+          : new Date(a.start).toLocaleDateString('en',{month:'short',day:'numeric'}) + ' – ' + new Date(a.end).toLocaleDateString('en',{month:'short',day:'numeric'});
+        html += `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid ${c.border};background:${c.bg}">
+          <span style="font-size:16px;flex-shrink:0">${icon}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:${c.text}">${a.activity}</div>
+            <div style="font-size:11px;color:#888780;margin-top:2px">${a.partner}${a.enterprise?' · '+a.enterprise:''} · ${dateStr}</div>
+          </div>
+          <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:white;border:1px solid ${c.border};color:${c.text};white-space:nowrap">${a.type}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+
+    document.getElementById('mktcal-view').innerHTML = html;
+  }
+
+  function rerender() {
+    const s = window._mktCalState || {};
+    if ((s.viewMode||'gantt') === 'gantt') renderGantt();
+    else renderList();
+  }
+
+  // Build the tab HTML
+  const allPartners = [...new Set(MKT_ACTIVITIES.map(a => a.partner.split('/')[0]))].sort();
+  const allTypes    = [...new Set(MKT_ACTIVITIES.map(a => a.type))].sort();
+
+  el.innerHTML = `
+  ${metricCards([
+    {l:'Total activities',    v:MKT_ACTIVITIES.length, s:'Events + campaigns + ads'},
+    {l:'Events',             v:MKT_ACTIVITIES.filter(a=>a.type==='Event').length,    s:'Conferences & activations'},
+    {l:'Campaigns',          v:MKT_ACTIVITIES.filter(a=>a.type==='Campaign').length, s:'Demand generation'},
+    {l:'Partners covered',   v:Object.keys(byPartner).length, s:'Across all activities'},
+  ])}
+  <div class="chart-full">
+    <div class="chart-header" style="flex-wrap:wrap;gap:8px">
+      <div class="chart-title" style="margin-bottom:0">2026 Partner Marketing Calendar</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <div class="tog-row">
+          <button class="tog on" id="cal-gantt" onclick="calView('gantt')">Gantt</button>
+          <button class="tog" id="cal-list" onclick="calView('list')">List</button>
+        </div>
+        <select id="cal-partner" onchange="calFilter()" style="padding:3px 8px;border-radius:5px;border:1px solid #D3D1C7;font-size:11px;color:#888780;background:#fff">
+          <option value="All">All partners</option>
+          ${allPartners.map(p=>`<option value="${p}">${p}</option>`).join('')}
+        </select>
+        <select id="cal-type" onchange="calFilter()" style="padding:3px 8px;border-radius:5px;border:1px solid #D3D1C7;font-size:11px;color:#888780;background:#fff">
+          <option value="All">All types</option>
+          ${allTypes.map(t=>`<option value="${t}">${TYPE_ICONS[t]} ${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="legend" style="margin-top:8px">
+      ${Object.entries(PARTNER_COLORS).filter(([k])=>k!=='default').map(([k,v])=>
+        `<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${v.bg};border:1.5px solid ${v.border}"></span>${k}</span>`
+      ).join('')}
+    </div>
+    <div id="mktcal-view" style="margin-top:12px"></div>
+  </div>`;
+
+  // Initialise shared state BEFORE first render
+  window._mktCalState = { filterPartner:'All', filterType:'All', viewMode:'gantt', rerender };
+
+  rerender();
+}
+
+function calView(mode) {
+  if (!window._mktCalState) return;
+  window._mktCalState.viewMode = mode;
+  const gBtn = document.getElementById('cal-gantt');
+  const lBtn = document.getElementById('cal-list');
+  if (gBtn) gBtn.className = 'tog'+(mode==='gantt'?' on':'');
+  if (lBtn) lBtn.className = 'tog'+(mode==='list'?' on':'');
+  window._mktCalState.rerender();
+}
+
+function calFilter() {
+  if (!window._mktCalState) return;
+  const pEl = document.getElementById('cal-partner');
+  const tEl = document.getElementById('cal-type');
+  window._mktCalState.filterPartner = pEl ? pEl.value : 'All';
+  window._mktCalState.filterType    = tEl ? tEl.value : 'All';
+  window._mktCalState.rerender();
+}
+
 // ── ROUTING ───────────────────────────────────────────────────────────────────
-const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts'];
+const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal'];
 const rendered={};
 function gotoTab(t){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
@@ -1197,6 +1461,7 @@ function gotoTab(t){
     else if(t==='dealexp')renderDealExp();
     else if(t==='dealsreg2')renderDR2Tab();
     else if(t==='contacts')renderContactsTab();
+    else if(t==='mktcal')renderMktCal();
     rendered[t]=true;
   }
 }
