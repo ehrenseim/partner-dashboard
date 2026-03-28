@@ -866,10 +866,10 @@ function togPClose(type,mode){
 // ── WON TAB ───────────────────────────────────────────────────────────────────
 function renderWonTab(){
   document.getElementById('tab-won').innerHTML=metricCards([
-    {l:'2026 won YTD (Affiliated+Co-sell)',v:fmt(11116781+3672272),s:'93 deals · Jan–Mar',cls:'won'},
-    {l:'Q1 2025 pace (est.)',v:fmt((40758779+11607464)/4),s:'Annual ÷ 4'},
-    {l:'2025 affiliated won',v:fmt(40758779),s:'295 deals · full year'},
-    {l:'2025 co-sell won',v:fmt(11607464),s:'71 deals · full year'},
+    {l:'2026 won YTD',v:fmt(11116781+3672272),s:'93 deals · Jan–Mar',cls:'won'},
+    {l:'2025 Q1 pace (est.)',v:fmt((40758779+11607464)/4),s:'Annual ÷ 4'},
+    {l:'2025 full-year won',v:fmt(40758779+11607464),s:'366 deals · all channels'},
+    {l:'2026 annualized pace',v:fmt((11116781+3672272)*4),s:'Extrapolated from Q1'},
   ])+`
   <div class="chart-full">
     <div class="chart-header">
@@ -879,44 +879,60 @@ function renderWonTab(){
         <button class="tog" id="won-c" onclick="togWon('count')">Deal count</button>
       </div>
     </div>
-    <div class="note">2026 Jan–Mar actual close dates · 2025 Jan–Dec full year</div>
-    <div class="legend"><span><span class="ld" style="background:#9FE1CB"></span>Affiliated 2025</span><span><span class="ld" style="background:#378ADD"></span>Affiliated 2026</span><span><span class="ld" style="background:#EF9F27"></span>Co-sell 2025</span><span><span class="ld" style="background:#1D9E75"></span>Co-sell 2026</span></div>
+    <div class="note">2026 Jan–Mar actual close dates · 2025 Jan–Dec full year · Affiliated + Co-sell combined</div>
+    <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>2025 Won</span><span><span class="ld" style="background:#059669"></span>2026 Won</span></div>
     <div style="position:relative;height:230px"><div id="won-monthly" style="width:100%;height:100%"></div></div>
   </div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">2026 won by partner — affiliated</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
-    <div class="chart-card"><div class="chart-title">2025 won by partner — affiliated (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
-  </div>
-  <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">2026 won by partner — co-sell</div><div style="position:relative;height:260px"><div id="won-pc26" style="width:100%;height:100%"></div></div></div>
-    <div class="chart-card"><div class="chart-title">2025 won by partner — co-sell (full year)</div><div style="position:relative;height:260px"><div id="won-pc25" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2026 won by partner — all channels</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2025 won by partner — all channels (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
   </div>`;
 
-  const wk=sortedUnion(MD.won_rev.aff25,MD.won_rev.aff26,MD.won_rev.cs25,MD.won_rev.cs26);
-  window._wk=wk;
-  bar('won-monthly',wk.map(mLabel),[
-    {label:'Affiliated 2025',data:wk.map(k=>MD.won_rev.aff25[k]||0),backgroundColor:'#9FE1CB'},
-    {label:'Affiliated 2026',data:wk.map(k=>MD.won_rev.aff26[k]||0),backgroundColor:'#378ADD'},
-    {label:'Co-sell 2025',data:wk.map(k=>MD.won_rev.cs25[k]||0),backgroundColor:'#EF9F27'},
-    {label:'Co-sell 2026',data:wk.map(k=>MD.won_rev.cs26[k]||0),backgroundColor:'#1D9E75'},
+  // Combine aff+cs by month into single 2025 and 2026 series
+  const MON_W=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function wonByMonth(yr) {
+    const aff = yr==='2025'?MD.won_rev.aff25:MD.won_rev.aff26;
+    const cs  = yr==='2025'?MD.won_rev.cs25:MD.won_rev.cs26;
+    return MON_W.map((_,i)=>{
+      const k=`${yr}-${String(i+1).padStart(2,'0')}`;
+      return (aff[k]||0)+(cs[k]||0);
+    });
+  }
+  function wonCountByMonth(yr) {
+    const aff = yr==='2025'?MD.won_count.aff25:MD.won_count.aff26;
+    const cs  = yr==='2025'?MD.won_count.cs25:MD.won_count.cs26;
+    return MON_W.map((_,i)=>{
+      const k=`${yr}-${String(i+1).padStart(2,'0')}`;
+      return (aff[k]||0)+(cs[k]||0);
+    });
+  }
+  window._wk=MON_W;
+  window._won25rev=wonByMonth('2025'); window._won26rev=wonByMonth('2026');
+  window._won25cnt=wonCountByMonth('2025'); window._won26cnt=wonCountByMonth('2026');
+  bar('won-monthly',MON_W,[
+    {label:'2025 Won',data:window._won25rev,backgroundColor:'#93C5FD'},
+    {label:'2026 Won',data:window._won26rev,backgroundColor:'#059669'},
   ]);
-  [['won-pa26','won_aff26'],['won-pa25','won_aff25'],['won-pc26','won_cs26'],['won-pc25','won_cs25']].forEach(([id,key])=>{
-    const e=Object.entries(MD.partner_rev[key]).sort((a,b)=>b[1]-a[1]).slice(0,7);
-    barH(id,e.map(x=>x[0]),[{data:e.map(x=>x[1]),backgroundColor:'#378ADD'}]);
-  });
+  // Merge aff+cs partner revenue for 2026 and 2025
+  function mergePartnerRev(keys) {
+    const merged={};
+    keys.forEach(k=>Object.entries(MD.partner_rev[k]).forEach(([p,v])=>{merged[p]=(merged[p]||0)+v;}));
+    return Object.entries(merged).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  }
+  const wp26=mergePartnerRev(['won_aff26','won_cs26']);
+  const wp25=mergePartnerRev(['won_aff25','won_cs25']);
+  barH('won-pa26',wp26.map(x=>x[0]),[{data:wp26.map(x=>x[1]),backgroundColor:'#059669'}]);
+  barH('won-pa25',wp25.map(x=>x[0]),[{data:wp25.map(x=>x[1]),backgroundColor:'#93C5FD'}]);
 }
 
 function togWon(mode){
-  const wk=window._wk;
   MiniChart.destroy('won-monthly');
-  const d=mode==='rev'?MD.won_rev:MD.won_count;
-  bar('won-monthly',wk.map(mLabel),[
-    {label:'Affiliated 2025',data:wk.map(k=>d.aff25[k]||0),backgroundColor:'#9FE1CB'},
-    {label:'Affiliated 2026',data:wk.map(k=>d.aff26[k]||0),backgroundColor:'#378ADD'},
-    {label:'Co-sell 2025',data:wk.map(k=>d.cs25[k]||0),backgroundColor:'#EF9F27'},
-    {label:'Co-sell 2026',data:wk.map(k=>d.cs26[k]||0),backgroundColor:'#1D9E75'},
-  ],mode==='count'?'count':undefined);
-  document.getElementById('won-r').className='tog'+(mode==='rev'?' on':'');
+  const rev=mode==='rev';
+  bar('won-monthly',window._wk,[
+    {label:'2025 Won',data:rev?window._won25rev:window._won25cnt,backgroundColor:'#93C5FD'},
+    {label:'2026 Won',data:rev?window._won26rev:window._won26cnt,backgroundColor:'#059669'},
+  ],rev?undefined:'count');
+  document.getElementById('won-r').className='tog'+(rev?' on':'');
   document.getElementById('won-c').className='tog'+(mode==='count'?' on':'');
 }
 
