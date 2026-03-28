@@ -386,6 +386,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
     <button class="nav-tab" onclick="gotoTab('dealexp')">Deal explorer</button>
     <button class="nav-tab" onclick="gotoTab('contacts')">Partner contacts added</button>
     <button class="nav-tab" onclick="gotoTab('mktcal')">Marketing calendar</button>
+    <button class="nav-tab" onclick="gotoTab('eventplay')">Event playbook</button>
   </div>
   <div id="tab-overview"></div>
   <div id="tab-affiliated" style="display:none"></div>
@@ -395,6 +396,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
   <div id="tab-dealsreg2" style="display:none"></div>
   <div id="tab-contacts" style="display:none"></div>
   <div id="tab-mktcal" style="display:none"></div>
+  <div id="tab-eventplay" style="display:none"></div>
 </div>
 <script>
 function fmt(v){if(!v||v===0)return'$0';return'$'+(v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':Math.round(v).toString())}
@@ -1447,8 +1449,195 @@ function calFilter() {
   window._mktCalState.rerender();
 }
 
+
+// ── EVENT PLAYBOOK ────────────────────────────────────────────────────────────
+function renderEventPlay() {
+  const el = document.getElementById('tab-eventplay');
+
+  const section = (title, icon, content) => `
+    <div class="chart-full" style="margin-bottom:1.25rem">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D3D1C7">
+        <span style="font-size:22px">${icon}</span>
+        <div style="font-size:15px;font-weight:700;color:#1a1a18">${title}</div>
+      </div>
+      ${content}
+    </div>`;
+
+  const kpi = (value, label, sub='') => `
+    <div style="background:#f5f4f0;border-radius:8px;padding:12px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:700;color:#185FA5">${value}</div>
+      <div style="font-size:11px;font-weight:600;color:#1a1a18;margin-top:2px">${label}</div>
+      ${sub ? `<div style="font-size:10px;color:#888780;margin-top:2px">${sub}</div>` : ''}
+    </div>`;
+
+  const step = (num, title, body) => `
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px">
+      <div style="width:28px;height:28px;border-radius:50%;background:#185FA5;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${num}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:2px">${title}</div>
+        <div style="font-size:12px;color:#888780;line-height:1.5">${body}</div>
+      </div>
+    </div>`;
+
+  const checklist = (items) => items.map(([done, text]) => `
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #EEEDEA">
+      <span style="font-size:14px;flex-shrink:0">${done ? '✅' : '⏳'}</span>
+      <span style="font-size:12px;color:${done?'#888780':'#1a1a18'};${done?'text-decoration:line-through':''}">${text}</span>
+    </div>`).join('');
+
+  const tableRow = (cells, isHeader=false) => `
+    <tr style="${isHeader?'background:#185FA5':''}">
+      ${cells.map(c=>`<${isHeader?'th':'td'} style="padding:7px 10px;${isHeader?'color:#fff;font-size:11px;text-align:left;font-weight:600':'font-size:12px;color:#1a1a18;border-bottom:1px solid #EEEDEA'}">${c}</${isHeader?'th':'td'}>`).join('')}
+    </tr>`;
+
+  const phaseCard = (phase, color, timing, items) => `
+    <div style="border:1px solid ${color};border-radius:10px;overflow:hidden;flex:1;min-width:220px">
+      <div style="background:${color};padding:10px 14px">
+        <div style="font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em">${phase}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.8);margin-top:2px">${timing}</div>
+      </div>
+      <div style="padding:10px 14px">
+        ${items.map(i=>`<div style="font-size:11px;color:#1a1a18;padding:4px 0;border-bottom:1px solid #EEEDEA;display:flex;gap:6px"><span>▸</span><span>${i}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#1a1a18;margin-bottom:4px">Google Cloud Next '26 — Event Playbook</h2>
+        <div style="font-size:13px;color:#888780">April 22–24, 2026 · Mandalay Bay Convention Center, Las Vegas</div>
+      <div style="font-size:12px;color:#B4B2A9;margin-top:4px;font-style:italic">This is one example of our standard event playbook process — the same framework applies to all partner events.</div>
+      </div>
+      <span style="background:#E8F5E9;border:1px solid #66BB6A;color:#2E7D32;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">🟢 Active Event</span>
+    </div>
+
+    ${section('Event Overview', '🎯', `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+        ${kpi('200','Pre-event emails','Sales outreach target')}
+        ${kpi('40','Meetings target','Full team combined')}
+        ${kpi('$250K','Pipeline target','From Next \'26 leads')}
+        ${kpi('3,000+','LinkedIn impressions','Per post target')}
+      </div>
+      <div style="background:#EEF5FF;border-left:4px solid #378ADD;border-radius:0 8px 8px 0;padding:12px 16px;font-size:12px;color:#1A3A6A;line-height:1.6">
+        <strong>Goal:</strong> Create awareness of our AI &amp; Data-related expertise on Google Cloud. Build relationships with enterprise IT leaders, cloud architects, data/AI decision-makers, and generate qualified pipeline.
+      </div>
+    `)}
+
+    ${section('Team & Logistics', '✈️', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div>
+          <div class="section-label" style="margin-bottom:8px">Attending team</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${['Ehren','David','Toren','Michael','Sergey','Mark','Andy'].map(n=>`<span style="padding:4px 10px;background:#f5f4f0;border-radius:6px;font-size:12px;color:#1a1a18;font-weight:500">${n}</span>`).join('')}
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:#888780;line-height:1.6">
+            📍 Hotel: Planet Hollywood<br>
+            👔 Attire: Improving-branded soccer jerseys (world cup theme)<br>
+            ✈️ Book flights &amp; hotel by <strong style="color:#D85A30">March 20th</strong>
+          </div>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:8px">Shirt &amp; vest sizes</div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            ${tableRow(['Team Member','Polo','Vest'], true)}
+            ${[['Sergey Vershinin','XL','XL'],['David O\'Hara','XL','XL'],['Toren Huntley','XS','S'],['Michael McLachlan','M','M'],['Mark Christiansen','XL','XL'],['Corey Brown','M','M'],['Andy Connor','XL','XL'],['Ehren Seim','L','M']].map(r=>tableRow(r)).join('')}
+          </table>
+        </div>
+      </div>
+    `)}
+
+    ${section('Event Phases & Accountability', '📋', `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:0">
+        ${phaseCard('Pre-Event','#378ADD','45 days out → event day',[
+          'Weekly full-team calls (45 days out)',
+          '200 email invitations sent by Mar 16',
+          'LinkedIn social posts by Mar 16',
+          'Swag &amp; vests ordered by Mar 20',
+          'Strategy calls with ALL attendees',
+          'Dinner reservation (pending)',
+          'Golf event booking (pending)',
+        ])}
+        ${phaseCard('At Event','#1D9E75','April 22–24',[
+          'Execute 40 meetings target',
+          'Wear Improving-branded attire',
+          'Distribute swag at meetings',
+          'Tag all emails &amp; meetings in CRM',
+          'Tag opportunities with event tag',
+          'Network with Google Cloud team',
+        ])}
+        ${phaseCard('Post-Event','#D85A30','4 weeks after',[
+          'Weekly full-team calls (4 weeks)',
+          '200 follow-up emails (workshop/webinar)',
+          '$250K pipeline growth target',
+          'Team retrospective — what worked?',
+          'Document improvements for next event',
+          'Report results to leadership',
+        ])}
+      </div>
+    `)}
+
+    ${section('Pre-Event Action Items', '✅', `
+      ${checklist([
+        [true,  'Send Google Next \'26 invitation emails to prospective customers (by Mar 16)'],
+        [true,  'Share Google Next \'26 social posts (by Mar 16)'],
+        [false, 'Book flights & hotel at Planet Hollywood (by Mar 20)'],
+        [false, 'Order swag and Improving-branded vests (by Mar 20)'],
+        [false, 'Book team, partner & customer dinner reservation'],
+        [false, 'Book golf event for partners, prospective customers & Improvers'],
+        [false, 'Complete strategy calls with ALL Improving attendees'],
+        [false, 'Confirm 40 meetings booked ahead of event'],
+      ])}
+    `)}
+
+    ${section('Swag & Promotions', '🎁', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+        <div>
+          <div class="section-label" style="margin-bottom:8px">Swag items (for meetings)</div>
+          ${['Improving-branded socks','Air Flys','Improving-branded poker chips','Improving-branded playing cards','Branded pouch for all swag items'].map(i=>`
+            <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #EEEDEA;font-size:12px;color:#1a1a18">
+              <span>🎁</span>${i}
+            </div>`).join('')}
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:8px">Pre-event promotions</div>
+          ${[['📧','Email Invitations','200 targeted outreach emails to prospective customers'],['💼','LinkedIn Posts','3,000+ impression target per post — team shares'],['👔','Branded Attire','Patagonia polo &amp; vest + soccer jerseys (world cup theme)']].map(([icon,title,body])=>`
+            <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #EEEDEA">
+              <span style="font-size:18px">${icon}</span>
+              <div><div style="font-size:12px;font-weight:600;color:#1a1a18">${title}</div><div style="font-size:11px;color:#888780;margin-top:2px">${body}</div></div>
+            </div>`).join('')}
+        </div>
+      </div>
+    `)}
+
+    ${section('CRM Tracking — How to Tag Activity', '🗄️', `
+      <div style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:10px 14px;font-size:12px;color:#5A4010;margin-bottom:14px">
+        <strong>Event tag to use everywhere:</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;border:1px solid #EFD89A;font-size:12px">2026 – GOOG – Google Cloud Next 2026</code>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div style="border:1px solid #D3D1C7;border-radius:8px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:#1a1a18;margin-bottom:8px">📧 Tag Emails in Outlook</div>
+          ${step(1,'Click the Sales icon','In the Outlook ribbon, open the Sales drop-down menu')}
+          ${step(2,'Search "2026 – GOOG"','Select the 2026 – GOOG – Google Cloud Next 2026 event tag')}
+        </div>
+        <div style="border:1px solid #D3D1C7;border-radius:8px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:#1a1a18;margin-bottom:8px">📅 Tag Meetings in Teams</div>
+          ${step(1,'Click New → Event','In the Outlook ribbon, create a new event')}
+          ${step(2,'Click the Apps icon','In the event window, select the Sales option')}
+          ${step(3,'Search "2026 – GOOG"','Select the Google Cloud Next 2026 event tag')}
+        </div>
+        <div style="border:1px solid #D3D1C7;border-radius:8px;padding:12px">
+          <div style="font-size:12px;font-weight:700;color:#1a1a18;margin-bottom:8px">💼 Tag Opportunities in Dynamics</div>
+          ${step(1,'Open the opportunity','Navigate to Source Info section')}
+          ${step(2,'Search in Related Event','Type 2026 – GOOG – Google Cloud Next 2026')}
+          ${step(3,'Select the tag','Links the opportunity to the event for tracking')}
+        </div>
+      </div>
+    `)}
+  `;
+}
+
 // ── ROUTING ───────────────────────────────────────────────────────────────────
-const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal'];
+const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay'];
 const rendered={};
 function gotoTab(t){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
@@ -1462,6 +1651,7 @@ function gotoTab(t){
     else if(t==='dealsreg2')renderDR2Tab();
     else if(t==='contacts')renderContactsTab();
     else if(t==='mktcal')renderMktCal();
+    else if(t==='eventplay')renderEventPlay();
     rendered[t]=true;
   }
 }
