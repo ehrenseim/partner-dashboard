@@ -940,12 +940,12 @@ function renderWonTab(){
     <div style="position:relative;height:230px"><div id="won-monthly" style="width:100%;height:100%"></div></div>
   </div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">2026 won by partner — affiliated</div><div style="position:relative;height:200px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
-    <div class="chart-card"><div class="chart-title">2025 won by partner — affiliated (full year)</div><div style="position:relative;height:200px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2026 won by partner — affiliated</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2025 won by partner — affiliated (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
   </div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">2026 won by partner — co-sell</div><div style="position:relative;height:200px"><div id="won-pc26" style="width:100%;height:100%"></div></div></div>
-    <div class="chart-card"><div class="chart-title">2025 won by partner — co-sell (full year)</div><div style="position:relative;height:200px"><div id="won-pc25" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2026 won by partner — co-sell</div><div style="position:relative;height:260px"><div id="won-pc26" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2025 won by partner — co-sell (full year)</div><div style="position:relative;height:260px"><div id="won-pc25" style="width:100%;height:100%"></div></div></div>
   </div>`;
 
   const wk=sortedUnion(MD.won_rev.aff25,MD.won_rev.aff26,MD.won_rev.cs25,MD.won_rev.cs26);
@@ -1033,8 +1033,8 @@ function renderDR2Tab() {
   ${metricCards([
     {l:'2026 open registrations',v:'94',s:'Total pipeline: $35.3M',cls:'pipeline'},
     {l:'2025 open registrations',v:'139',s:'Total pipeline: $27.4M'},
-    {l:'2026 close rate',v:'1.1%',s:'1 won / 95 registered'},
-    {l:'2025 close rate',v:'18.7%',s:'32 won / 171 registered'},
+    {l:'2026 close rate (all)',v:'1.1%',s:'1 won / 95 · incl. 65 unassigned'},
+    {l:'2025 close rate (all)',v:'18.7%',s:'32 won / 171 · incl. 34 unassigned'},
   ])}
   <div style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:12px 16px;margin-bottom:1.25rem;font-size:12px;color:#5A4010;line-height:1.6">
     <strong>⚠ Data caveat — 2025 registration volume is overstated.</strong>
@@ -1058,45 +1058,25 @@ function renderDR2Tab() {
       <div class="chart-title">Close rate — registered vs non-registered deals</div>
     </div>
     <div class="note">Do registered deals close at a higher rate? No — pipeline deals without registration close significantly better in both years. Registered deals may be earlier-stage or more contested.</div>
+    <div style="margin-bottom:12px">
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="tog on" id="cr-all-btn" onclick="togCloseRate('all')">All registrations</button>
+        <button class="tog" id="cr-named-btn" onclick="togCloseRate('named')">Named partners only</button>
+      </div>
+      <div id="cr-note-all" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic">Includes all registrations — 65 of 94 (2026) and 34 of 139 (2025) have no partner assigned</div>
+      <div id="cr-note-named" style="font-size:11px;color:#888780;margin-bottom:10px;font-style:italic;display:none">Named partners only — excludes unassigned deals. More accurate reflection of actual partner-engaged registrations</div>
+    </div>
     <div class="charts-grid" style="margin-bottom:0">
       <div>
-        <div style="margin-bottom:12px">
-          <div class="section-label" style="margin-bottom:10px">2026 YTD (Q1)</div>
-          <div style="display:flex;gap:12px;align-items:flex-end;height:160px;padding-bottom:8px">
-            ${[
-              {label:'Registered', val:1.1, won:1, total:95, color:'#378ADD'},
-              {label:'Non-registered', val:37.1, won:93, total:251, color:'#1D9E75'},
-            ].map(b => `
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-                <div style="font-size:13px;font-weight:700;color:${b.color}">${b.val}%</div>
-                <div style="width:100%;background:${b.color};border-radius:4px 4px 0 0;height:${Math.round(b.val/37.1*120)}px;min-height:4px"></div>
-                <div style="font-size:11px;font-weight:600;color:#1a1a18;text-align:center">${b.label}</div>
-                <div style="font-size:10px;color:#888780">${b.won}/${b.total} deals</div>
-              </div>`).join('')}
-          </div>
-        </div>
+        <div class="section-label" style="margin-bottom:10px">2026 YTD (Q1)</div>
+        <div id="cr-bars-26" style="display:flex;gap:12px;align-items:flex-end;height:160px;padding-bottom:8px"></div>
       </div>
       <div>
-        <div style="margin-bottom:12px">
-          <div class="section-label" style="margin-bottom:10px">2025 full year</div>
-          <div style="display:flex;gap:12px;align-items:flex-end;height:160px;padding-bottom:8px">
-            ${[
-              {label:'Registered', val:18.7, won:32, total:171, color:'#378ADD'},
-              {label:'Non-registered', val:58.4, won:366, total:627, color:'#1D9E75'},
-            ].map(b => `
-              <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
-                <div style="font-size:13px;font-weight:700;color:${b.color}">${b.val}%</div>
-                <div style="width:100%;background:${b.color};border-radius:4px 4px 0 0;height:${Math.round(b.val/58.4*120)}px;min-height:4px"></div>
-                <div style="font-size:11px;font-weight:600;color:#1a1a18;text-align:center">${b.label}</div>
-                <div style="font-size:10px;color:#888780">${b.won}/${b.total} deals</div>
-              </div>`).join('')}
-          </div>
-        </div>
+        <div class="section-label" style="margin-bottom:10px">2025 full year</div>
+        <div id="cr-bars-25" style="display:flex;gap:12px;align-items:flex-end;height:160px;padding-bottom:8px"></div>
       </div>
     </div>
-    <div style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:10px 14px;font-size:12px;color:#5A4010;margin-top:4px">
-      <strong>Key finding:</strong> In both years, registered deals close at a <em>lower</em> rate than non-registered pipeline — 18.7% vs 58.4% in 2025, and 1.1% vs 37.1% in 2026. This likely reflects that registrations skew earlier-stage and include more speculative opportunities. The 65 unassigned-partner deals in 2026 may also inflate the open count without real partner engagement.
-    </div>
+    <div id="cr-finding" style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:10px 14px;font-size:12px;color:#5A4010;margin-top:12px"></div>
   </div>
 
   <div class="charts-grid">
@@ -1125,6 +1105,7 @@ function renderDR2Tab() {
     {label:'2025', data:allP.map(p=>DR2.partner_open_25[p]||0), backgroundColor:'#9FE1CB', borderRadius:3},
     {label:'2026', data:allP.map(p=>DR2.partner_open_26[p]||0), backgroundColor:'#378ADD', borderRadius:3},
   ]);
+  renderCloseRateBars('all');
 }
 
 // ── PARTNER CONTACTS ADDED TAB ──────────────────────────────────────────────────────
@@ -1228,6 +1209,52 @@ function renderContactsTab() {
     {label:'2025', data:allPartners.map(p=>CONTACTS.partner_25[p]||0), backgroundColor:'#9FE1CB', borderRadius:3},
     {label:'2026', data:allPartners.map(p=>CONTACTS.partner_26[p]||0), backgroundColor:'#1D9E75', borderRadius:3},
   ], 'count');}
+
+// ── CLOSE RATE TOGGLE ────────────────────────────────────────────────────────
+const CLOSE_RATES = {
+  all:   { y26:{won:1,total:95,rate:1.1},   y25:{won:32,total:171,rate:18.7}, nonreg26:{won:93,total:251,rate:37.1}, nonreg25:{won:366,total:627,rate:58.4} },
+  named: { y26:{won:1,total:30,rate:3.3},   y25:{won:15,total:120,rate:12.5}, nonreg26:{won:93,total:251,rate:37.1}, nonreg25:{won:366,total:627,rate:58.4} },
+};
+
+function renderCloseRateBars(mode) {
+  const d = CLOSE_RATES[mode];
+  const maxRate = 58.4;
+
+  function barsHTML(reg, nonreg) {
+    return [
+      {label:'Registered', val:reg.rate, won:reg.won, total:reg.total, color:'#378ADD'},
+      {label:'Non-registered', val:nonreg.rate, won:nonreg.won, total:nonreg.total, color:'#1D9E75'},
+    ].map(b => `
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px">
+        <div style="font-size:13px;font-weight:700;color:${b.color}">${b.val}%</div>
+        <div style="width:100%;background:${b.color};border-radius:4px 4px 0 0;height:${Math.max(4,Math.round(b.val/maxRate*120))}px"></div>
+        <div style="font-size:11px;font-weight:600;color:#1a1a18;text-align:center">${b.label}</div>
+        <div style="font-size:10px;color:#888780">${b.won}/${b.total} deals</div>
+      </div>`).join('');
+  }
+
+  const el26 = document.getElementById('cr-bars-26');
+  const el25 = document.getElementById('cr-bars-25');
+  if (el26) el26.innerHTML = barsHTML(d.y26, d.nonreg26);
+  if (el25) el25.innerHTML = barsHTML(d.y25, d.nonreg25);
+
+  const finding = document.getElementById('cr-finding');
+  if (finding) {
+    if (mode === 'all') {
+      finding.innerHTML = '<strong>Key finding:</strong> Registered deals close at a <em>lower</em> rate than non-registered pipeline in both years. The 2026 rate (1.1%) is heavily suppressed by 65 unassigned-partner deals — switch to "Named partners only" for a more accurate view.';
+    } else {
+      finding.innerHTML = '<strong>Key finding (named partners only):</strong> With unassigned deals excluded, 2026 registered close rate rises to <strong>3.3%</strong> (1/30) and 2025 to <strong>12.5%</strong> (15/120). Non-registered pipeline still closes at a much higher rate (37.1% and 58.4%), suggesting registration alone does not drive deal velocity.';
+    }
+  }
+}
+
+function togCloseRate(mode) {
+  document.getElementById('cr-all-btn').className = 'tog' + (mode==='all' ? ' on' : '');
+  document.getElementById('cr-named-btn').className = 'tog' + (mode==='named' ? ' on' : '');
+  document.getElementById('cr-note-all').style.display = mode==='all' ? '' : 'none';
+  document.getElementById('cr-note-named').style.display = mode==='named' ? '' : 'none';
+  renderCloseRateBars(mode);
+}
 
 // ── ROUTING ───────────────────────────────────────────────────────────────────
 const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts'];
