@@ -267,24 +267,8 @@ const MiniChart = {
       svg.appendChild(txt(lx+22,H-3,ds.label||'',{'fill':'#888780','font-size':'9'}));
     });
 
-    // Delta badges container
-    const deltaDiv = document.createElement('div');
-    deltaDiv.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:11px';
-    datasets.forEach(ds => {
-      labels.forEach((lbl,i) => {
-        if(i===0||!ds.data[i-1]||!ds.data[i]) return;
-        const up = ds.data[i] >= ds.data[i-1];
-        const pct = (((ds.data[i]-ds.data[i-1])/ds.data[i-1])*100).toFixed(0);
-        const badge = document.createElement('span');
-        badge.style.cssText=`display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;background:${up?'#E1F5EE':'#FAECE7'}`;
-        badge.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${ds.borderColor||'#378ADD'};display:inline-block"></span><span style="font-weight:500;color:#1a1a18">${ds.label||''}</span><span style="color:#888780">${lbl}</span><span style="color:${up?'#0F6E56':'#D85A30'};font-weight:700">${up?'↑':'↓'}${up?'+':''}${pct}%</span>`;
-        deltaDiv.appendChild(badge);
-      });
-    });
-
     this._charts[id]=true;
     wrap.appendChild(svg);
-    wrap.appendChild(deltaDiv);
   }
 };
 
@@ -539,7 +523,6 @@ function renderOverview(){
       <span><span style="color:#D85A30;font-weight:700;font-size:14px">↓</span> MoM down</span>
     </div>
     <div style="position:relative;height:270px"><div id="ov-trend" style="width:100%;height:100%"></div></div>
-    <div id="ov-deltas" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
   </div>
   <div class="charts-grid">
     <div class="chart-card">
@@ -604,87 +587,31 @@ function renderOverview(){
 
 function buildTrendChart(mode) {
   const td = window._trendData[mode];
-  const allKeys = sortedUnion(
-    td.affSrc25, td.affSrc26, td.csSrc25, td.csSrc26
-  );
+  const allKeys = sortedUnion(td.affSrc25, td.affSrc26, td.csSrc25, td.csSrc26);
   const labels = allKeys.map(mLabel);
+  const affData = allKeys.map(k => td.affSrc26[k] || td.affSrc25[k] || 0);
+  const csData  = allKeys.map(k => td.csSrc26[k]  || td.csSrc25[k]  || 0);
 
-  // Merge aff data: 2025 keys use src25, 2026 keys use src26
-  const affData = allKeys.map(k => (td.affSrc26[k] || td.affSrc25[k] || 0));
-  const csData  = allKeys.map(k => (td.csSrc26[k]  || td.csSrc25[k]  || 0));
-
-  // Build delta badges
-  function deltas(data, keys, color, label) {
-    return keys.map((k, i) => {
-      if (i === 0) return null;
-      const prev = data[i-1], curr = data[i];
-      if (!prev && !curr) return null;
-      const up = curr >= prev;
-      const pctChg = prev ? (((curr - prev) / prev) * 100).toFixed(0) : null;
-      return { k, label, up, pctChg, curr, color };
-    }).filter(Boolean);
-  }
-  const affDeltas = deltas(affData, allKeys, '#378ADD', 'Aff');
-  const csDeltas  = deltas(csData,  allKeys, '#1D9E75', 'CS');
-
-  const deltaEl = document.getElementById('ov-deltas');
-  deltaEl.innerHTML = [...affDeltas, ...csDeltas]
-    .sort((a, b) => a.k.localeCompare(b.k))
-    .map(d => {
-      const arrow = d.up ? '↑' : '↓';
-      const arrowColor = d.up ? '#0F6E56' : '#D85A30';
-      const bg = d.up ? '#E1F5EE' : '#FAECE7';
-      const pctStr = d.pctChg !== null ? ` ${d.pctChg > 0 ? '+' : ''}${d.pctChg}%` : '';
-      return `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;background:${bg};font-size:11px;color:#1a1a18">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${d.color}"></span>
-        <span style="font-weight:500">${d.label}</span>
-        <span style="color:#888780">${mLabel(d.k)}</span>
-        <span style="color:${arrowColor};font-weight:700">${arrow}${pctStr}</span>
-      </span>`;
-    }).join('');
-
-  // Chart.js annotation-style point markers via custom plugin
-  const momPlugin = {
-    id: 'momArrows',
-    afterDatasetsDraw(chart) {
-      const ctx = chart.ctx;
-      chart.data.datasets.forEach((ds, di) => {
-        const meta = chart.getDatasetMeta(di);
-        meta.data.forEach((pt, i) => {
-          if (i === 0) return;
-          const prev = ds.data[i - 1], curr = ds.data[i];
-          if (!prev && !curr) return;
-          const up = curr >= prev;
-          const x = pt.x, y = pt.y;
-          ctx.save();
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillStyle = up ? '#0F6E56' : '#D85A30';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = up ? 'bottom' : 'top';
-          ctx.fillText(up ? '↑' : '↓', x, up ? y - 4 : y + 4);
-          ctx.restore();
-        });
-      });
-    }
-  };
+  // Update note text
+  const noteEl = document.getElementById('ov-tr-note');
+  if (noteEl) noteEl.textContent = td.note;
 
   dc('ov-trend');
   MiniChart.line('ov-trend', labels, [
-    {
-      label: 'Affiliated',
-      data: affData,
-      borderColor: '#378ADD',
-      backgroundColor: 'rgba(55,138,221,0.08)',
-      fill: true,
-    },
-    {
-      label: 'Co-sell',
-      data: csData,
-      borderColor: '#1D9E75',
-      backgroundColor: 'rgba(29,158,117,0.06)',
-      fill: true,
-    },
+    { label:'Affiliated', data:affData, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.08)', fill:true },
+    { label:'Co-sell',    data:csData,  borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.06)', fill:true },
   ]);
+}
+
+function togOvTrend(mode) {
+  ['pip','cls','won'].forEach(id => {
+    const el = document.getElementById('ov-tr-'+id);
+    if (el) el.className = 'tog';
+  });
+  const map = { pipeline:'pip', close:'cls', won:'won' };
+  const btn = document.getElementById('ov-tr-'+map[mode]);
+  if (btn) btn.className = 'tog on';
+  buildTrendChart(mode);
 }
 function togWon(mode){
   const wk=window._wk;
