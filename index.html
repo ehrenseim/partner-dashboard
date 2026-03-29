@@ -1714,7 +1714,9 @@ function scorecardGauge(score, size=56) {
 
 function metricBar(label, val, max, color, fmt='pct') {
   const pct = Math.min((val/max)*100, 100);
-  const display = fmt==='$' ? '$'+Math.round(val/1e3)+'K' : fmt==='#' ? val : val.toFixed(1)+'%';
+  const display = fmt==='$'
+    ? (val>=1e6 ? '$'+(val/1e6).toFixed(1)+'M' : val>=1e3 ? '$'+Math.round(val/1e3)+'K' : '$'+Math.round(val))
+    : fmt==='#' ? val : val.toFixed(1)+'%';
   return `<div style="margin-bottom:6px">
     <div style="display:flex;justify-content:space-between;font-size:10px;color:#888780;margin-bottom:2px">
       <span>${label}</span><span style="font-weight:600;color:#1a1a18">${display}</span>
