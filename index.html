@@ -401,6 +401,8 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
     <button class="nav-tab" onclick="gotoTab('contacts')">Partner contacts added</button>
     <button class="nav-tab" onclick="gotoTab('mktcal')">Marketing calendar</button>
     <button class="nav-tab" onclick="gotoTab('eventplay')">Event playbook</button>
+    <button class="nav-tab" onclick="gotoTab('entscorecard')">Enterprise scorecard</button>
+    <button class="nav-tab" onclick="gotoTab('sellerscorecard')">Seller scorecard</button>
   </div>
   <div id="tab-overview"></div>
   <div id="tab-affiliated" style="display:none"></div>
@@ -411,6 +413,8 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
   <div id="tab-contacts" style="display:none"></div>
   <div id="tab-mktcal" style="display:none"></div>
   <div id="tab-eventplay" style="display:none"></div>
+  <div id="tab-entscorecard" style="display:none"></div>
+  <div id="tab-sellerscorecard" style="display:none"></div>
 </div>
 <script>
 function fmt(v){if(!v||v===0)return'$0';return'$'+(v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':Math.round(v).toString())}
@@ -1665,8 +1669,180 @@ function renderEventPlay() {
   `;
 }
 
+
+// ── SCORECARD DATA ────────────────────────────────────────────────────────────
+const ENT_DATA = [{"name":"Ohio, OH","score":63.9,"score_pipeline":23.6,"score_won":16.4,"score_dr":20.0,"score_close":3.9,"pipe_deals":26,"pipe_rev":21591900,"won_rev":2353200,"won_deals":9,"dr_count":23,"close_rate":25.7},{"name":"Minnesota, MN","score":59.2,"score_pipeline":2.4,"score_won":40.0,"score_dr":10.4,"score_close":6.3,"pipe_deals":11,"pipe_rev":2212540,"won_rev":5730640,"won_deals":8,"dr_count":12,"close_rate":42.1},{"name":"Calgary, AB","score":52.3,"score_pipeline":25.0,"score_won":15.7,"score_dr":4.3,"score_close":7.3,"pipe_deals":16,"pipe_rev":22873379,"won_rev":2252622,"won_deals":15,"dr_count":5,"close_rate":48.4},{"name":"Toronto, ON","score":24.1,"score_pipeline":4.4,"score_won":9.9,"score_dr":3.5,"score_close":6.3,"pipe_deals":22,"pipe_rev":4042483,"won_rev":1422687,"won_deals":16,"dr_count":4,"close_rate":42.1},{"name":"Atlanta, GA","score":23.7,"score_pipeline":3.2,"score_won":4.0,"score_dr":11.3,"score_close":5.2,"pipe_deals":17,"pipe_rev":2926900,"won_rev":568100,"won_deals":9,"dr_count":13,"close_rate":34.6},{"name":"Winnipeg, MB","score":22.0,"score_pipeline":0.5,"score_won":6.9,"score_dr":5.2,"score_close":9.4,"pipe_deals":9,"pipe_rev":463960,"won_rev":990675,"won_deals":15,"dr_count":6,"close_rate":62.5},{"name":"Houston, TX","score":21.1,"score_pipeline":3.8,"score_won":2.4,"score_dr":8.7,"score_close":6.2,"pipe_deals":10,"pipe_rev":3509800,"won_rev":340300,"won_deals":7,"dr_count":10,"close_rate":41.2},{"name":"Austin, TX","score":17.4,"score_pipeline":2.2,"score_won":4.6,"score_dr":4.3,"score_close":6.3,"pipe_deals":7,"pipe_rev":2025000,"won_rev":663300,"won_deals":5,"dr_count":5,"close_rate":41.7},{"name":"Dallas, TX","score":13.3,"score_pipeline":3.1,"score_won":2.7,"score_dr":4.3,"score_close":3.2,"pipe_deals":15,"pipe_rev":2830960,"won_rev":390200,"won_deals":4,"dr_count":5,"close_rate":21.1},{"name":"Chicago, IL","score":11.4,"score_pipeline":3.2,"score_won":0.6,"score_dr":4.3,"score_close":3.2,"pipe_deals":11,"pipe_rev":2947750,"won_rev":88000,"won_deals":3,"dr_count":5,"close_rate":21.4},{"name":"Ottawa, ON","score":8.7,"score_pipeline":1.5,"score_won":0.4,"score_dr":4.3,"score_close":2.5,"pipe_deals":5,"pipe_rev":1355000,"won_rev":55000,"won_deals":1,"dr_count":5,"close_rate":16.7},{"name":"Vancouver, BC","score":5.7,"score_pipeline":0.1,"score_won":0.5,"score_dr":0.0,"score_close":5.0,"pipe_deals":4,"pipe_rev":133597,"won_rev":77610,"won_deals":2,"dr_count":0,"close_rate":33.3},{"name":"Corporate","score":1.9,"score_pipeline":1.0,"score_won":0.0,"score_dr":0.9,"score_close":0.0,"pipe_deals":5,"pipe_rev":916701,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0}];
+
+const SELLER_DATA = [{"name":"Matt Russell","score":51.2,"score_pipeline":1.5,"score_won":40.0,"score_dr":3.3,"score_close":6.4,"pipe_deals":4,"pipe_rev":1310240,"won_rev":4645640,"won_deals":3,"dr_count":2,"close_rate":42.9},{"name":"Michael McCullough","score":46.8,"score_pipeline":25.0,"score_won":15.1,"score_dr":0.0,"score_close":6.7,"pipe_deals":10,"pipe_rev":22147688,"won_rev":1751945,"won_deals":8,"dr_count":0,"close_rate":44.4},{"name":"Jacqueline Bickel","score":34.7,"score_pipeline":1.7,"score_won":17.3,"score_dr":6.7,"score_close":9.0,"pipe_deals":2,"pipe_rev":1500000,"won_rev":2015000,"won_deals":3,"dr_count":4,"close_rate":60.0},{"name":"Jay Alexander","score":30.7,"score_pipeline":0.7,"score_won":4.0,"score_dr":20.0,"score_close":6.0,"pipe_deals":9,"pipe_rev":655000,"won_rev":459500,"won_deals":6,"dr_count":12,"close_rate":40.0},{"name":"Stephen Johnson","score":26.9,"score_pipeline":3.3,"score_won":2.9,"score_dr":11.7,"score_close":9.0,"pipe_deals":4,"pipe_rev":2950800,"won_rev":334800,"won_deals":6,"dr_count":7,"close_rate":60.0},{"name":"Anthony Cacioppo","score":22.0,"score_pipeline":20.3,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":1,"pipe_rev":18000000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Kyle Thorburn","score":21.0,"score_pipeline":0.2,"score_won":7.9,"score_dr":1.7,"score_close":11.2,"pipe_deals":4,"pipe_rev":193000,"won_rev":912039,"won_deals":12,"dr_count":1,"close_rate":75.0},{"name":"Aimee Ernst","score":20.0,"score_pipeline":0.3,"score_won":0.6,"score_dr":15.0,"score_close":4.1,"pipe_deals":8,"pipe_rev":270900,"won_rev":66000,"won_deals":3,"dr_count":9,"close_rate":27.3},{"name":"Laura Hofmeister","score":19.0,"score_pipeline":0.0,"score_won":0.6,"score_dr":3.3,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":72036,"won_deals":1,"dr_count":2,"close_rate":100.0},{"name":"Abhinit Pandey","score":18.6,"score_pipeline":0.1,"score_won":2.6,"score_dr":8.3,"score_close":7.5,"pipe_deals":3,"pipe_rev":127003,"won_rev":302861,"won_deals":3,"dr_count":5,"close_rate":50.0},{"name":"Lowell Messner","score":18.4,"score_pipeline":1.6,"score_won":0.7,"score_dr":15.0,"score_close":1.1,"pipe_deals":13,"pipe_rev":1421000,"won_rev":84000,"won_deals":1,"dr_count":9,"close_rate":7.1},{"name":"Shalini Arora","score":18.2,"score_pipeline":0.7,"score_won":5.0,"score_dr":5.0,"score_close":7.5,"pipe_deals":3,"pipe_rev":625000,"won_rev":579300,"won_deals":3,"dr_count":3,"close_rate":50.0},{"name":"Laura Juberian","score":17.2,"score_pipeline":0.0,"score_won":2.2,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":250000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Paul Cramer","score":17.1,"score_pipeline":0.0,"score_won":2.1,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":240000,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Raymond Lum","score":15.7,"score_pipeline":0.0,"score_won":0.7,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":77610,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Kevin MacPhie","score":15.6,"score_pipeline":0.0,"score_won":0.6,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":66400,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Lyle Rousselle","score":15.5,"score_pipeline":0.0,"score_won":0.5,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":55000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"David Cranstoun","score":14.2,"score_pipeline":1.8,"score_won":5.0,"score_dr":0.0,"score_close":7.5,"pipe_deals":7,"pipe_rev":1551490,"won_rev":580293,"won_deals":7,"dr_count":0,"close_rate":50.0},{"name":"Rob Neitge","score":13.7,"score_pipeline":0.1,"score_won":4.4,"score_dr":1.7,"score_close":7.5,"pipe_deals":1,"pipe_rev":100000,"won_rev":510000,"won_deals":1,"dr_count":1,"close_rate":50.0},{"name":"Jordan Vukanovich","score":13.3,"score_pipeline":2.4,"score_won":4.8,"score_dr":0.0,"score_close":6.2,"pipe_deals":10,"pipe_rev":2120000,"won_rev":553600,"won_deals":7,"dr_count":0,"close_rate":41.2},{"name":"Alexander Powell","score":12.7,"score_pipeline":0.1,"score_won":1.7,"score_dr":3.3,"score_close":7.5,"pipe_deals":3,"pipe_rev":120000,"won_rev":198200,"won_deals":3,"dr_count":2,"close_rate":50.0},{"name":"Jeffrey Armstrong","score":11.9,"score_pipeline":0.1,"score_won":2.5,"score_dr":3.3,"score_close":6.0,"pipe_deals":3,"pipe_rev":95993,"won_rev":288794,"won_deals":2,"dr_count":2,"close_rate":40.0},{"name":"David Sidwell","score":11.3,"score_pipeline":0.1,"score_won":0.3,"score_dr":3.3,"score_close":7.5,"pipe_deals":1,"pipe_rev":108000,"won_rev":38000,"won_deals":1,"dr_count":2,"close_rate":50.0},{"name":"Joshua Harrison","score":11.2,"score_pipeline":0.5,"score_won":1.6,"score_dr":1.7,"score_close":7.5,"pipe_deals":2,"pipe_rev":400000,"won_rev":188200,"won_deals":2,"dr_count":1,"close_rate":50.0},{"name":"William Bailey","score":10.9,"score_pipeline":0.2,"score_won":0.7,"score_dr":0.0,"score_close":10.0,"pipe_deals":1,"pipe_rev":150000,"won_rev":87000,"won_deals":2,"dr_count":0,"close_rate":66.7},{"name":"Jeffrey Schuemann","score":10.3,"score_pipeline":0.3,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":250000,"won_rev":0,"won_deals":0,"dr_count":6,"close_rate":0.0},{"name":"Steve Banks","score":10.1,"score_pipeline":0.2,"score_won":0.7,"score_dr":1.7,"score_close":7.5,"pipe_deals":1,"pipe_rev":192000,"won_rev":85000,"won_deals":1,"dr_count":1,"close_rate":50.0},{"name":"Oscar Velazquez","score":10.0,"score_pipeline":0.1,"score_won":0.7,"score_dr":1.7,"score_close":7.5,"pipe_deals":2,"pipe_rev":100000,"won_rev":84000,"won_deals":2,"dr_count":1,"close_rate":50.0},{"name":"Diana Stevens","score":9.0,"score_pipeline":1.9,"score_won":1.7,"score_dr":3.3,"score_close":2.1,"pipe_deals":6,"pipe_rev":1661860,"won_rev":192000,"won_deals":1,"dr_count":2,"close_rate":14.3},{"name":"Nicole Hilland","score":9.3,"score_pipeline":0.7,"score_won":1.1,"score_dr":0.0,"score_close":7.5,"pipe_deals":3,"pipe_rev":598688,"won_rev":131416,"won_deals":3,"dr_count":0,"close_rate":50.0}];
+
+function scoreColor(s) {
+  if (s >= 50) return '#059669';
+  if (s >= 30) return '#378ADD';
+  if (s >= 15) return '#EF9F27';
+  return '#D85A30';
+}
+function scoreBg(s) {
+  if (s >= 50) return '#E1F5EE';
+  if (s >= 30) return '#EEF5FF';
+  if (s >= 15) return '#FFF8E6';
+  return '#FAECE7';
+}
+function scoreTier(s) {
+  if (s >= 50) return 'Elite';
+  if (s >= 30) return 'Strong';
+  if (s >= 15) return 'Developing';
+  return 'Early';
+}
+
+function scorecardGauge(score, size=56) {
+  const r = size/2 - 4;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(score/100, 1);
+  const dash = circ * pct;
+  const gap  = circ - dash;
+  const c = scoreColor(score);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#E8E7E3" stroke-width="5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${c}" stroke-width="5"
+      stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+      stroke-linecap="round"
+      transform="rotate(-90 ${size/2} ${size/2})"/>
+    <text x="${size/2}" y="${size/2+1}" text-anchor="middle" dominant-baseline="middle"
+      font-size="${size < 50 ? 11 : 14}" font-weight="700" fill="${c}" font-family="sans-serif">${score}</text>
+  </svg>`;
+}
+
+function metricBar(label, val, max, color, fmt='pct') {
+  const pct = Math.min((val/max)*100, 100);
+  const display = fmt==='$' ? '$'+Math.round(val/1e3)+'K' : fmt==='#' ? val : val.toFixed(1)+'%';
+  return `<div style="margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#888780;margin-bottom:2px">
+      <span>${label}</span><span style="font-weight:600;color:#1a1a18">${display}</span>
+    </div>
+    <div style="background:#EEEDEA;border-radius:3px;height:5px">
+      <div style="width:${pct.toFixed(1)}%;height:5px;background:${color};border-radius:3px"></div>
+    </div>
+  </div>`;
+}
+
+function renderScorecardTab(elId, data, title, subtitle, entityLabel) {
+  const el = document.getElementById(elId);
+  const topScore = data[0].score;
+  const maxPipeRev = Math.max(...data.map(d=>d.pipe_rev));
+  const maxWonRev  = Math.max(...data.map(d=>d.won_rev));
+  const maxDR      = Math.max(...data.map(d=>d.dr_count));
+
+  // Summary KPIs
+  const total = data.length;
+  const elite = data.filter(d=>d.score>=50).length;
+  const strong = data.filter(d=>d.score>=30&&d.score<50).length;
+  const developing = data.filter(d=>d.score>=15&&d.score<30).length;
+  const early = data.filter(d=>d.score<15).length;
+
+  // Store state before defining renderCards so closure reads from window
+  window[`_sc_${elId}`] = { sortKey:'score', filterTier:'All', data, maxPipeRev, maxWonRev, maxDR };
+
+  function getFiltered() {
+    const st = window[`_sc_${elId}`];
+    return data
+      .filter(d => st.filterTier==='All' || scoreTier(d.score)===st.filterTier)
+      .sort((a,b) => b[st.sortKey] - a[st.sortKey]);
+  }
+
+  function renderCards() {
+    const filtered = getFiltered();
+    document.getElementById(`${elId}-cards`).innerHTML = filtered.map(d => {
+      const c = scoreColor(d.score);
+      const bg = scoreBg(d.score);
+      return `<div style="background:#fff;border:1px solid #D3D1C7;border-radius:12px;padding:14px 16px;border-top:3px solid ${c}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#1a1a18">${d.name}</div>
+            <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${bg};color:${c}">${scoreTier(d.score)}</div>
+          </div>
+          ${scorecardGauge(d.score, 60)}
+        </div>
+        <div style="border-top:1px solid #EEEDEA;padding-top:10px">
+          ${metricBar('Pipeline', d.pipe_rev, maxPipeRev, '#378ADD', '$')}
+          ${metricBar('Won revenue', d.won_rev, maxWonRev, '#059669', '$')}
+          ${metricBar('Registrations', d.dr_count, maxDR||1, '#EF9F27', '#')}
+          ${metricBar('Close rate', d.close_rate, 100, '#7F77DD', 'pct')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid #EEEDEA">
+          <div style="font-size:10px;color:#888780">Pipeline: <strong style="color:#1a1a18">${d.pipe_deals} deals</strong></div>
+          <div style="font-size:10px;color:#888780">Won: <strong style="color:#1a1a18">${d.won_deals} deals</strong></div>
+          <div style="font-size:10px;color:#888780">Score breakdown:</div>
+          <div style="font-size:10px;color:#888780"></div>
+          <div style="font-size:10px;color:#378ADD">Pipe: ${d.score_pipeline.toFixed(1)}/25</div>
+          <div style="font-size:10px;color:#059669">Won: ${d.score_won.toFixed(1)}/40</div>
+          <div style="font-size:10px;color:#EF9F27">DR: ${d.score_dr.toFixed(1)}/20</div>
+          <div style="font-size:10px;color:#7F77DD">Close: ${d.score_close.toFixed(1)}/15</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+  ${metricCards([
+    {l:'Total '+entityLabel+'s',v:String(total),s:'All with partner activity'},
+    {l:'Elite (50+)',v:String(elite),s:'Top performers',cls:'won'},
+    {l:'Strong (30–49)',v:String(strong),s:'Solid engagement',cls:'pipeline'},
+    {l:'Developing (15–29)',v:String(developing),s:'Building momentum'},
+  ])}
+  <div style="background:#EEF5FF;border:1px solid #D3D1C7;border-radius:8px;padding:10px 14px;margin-bottom:1.25rem;font-size:11px;color:#1A3A6A;line-height:1.6">
+    <strong>Scoring methodology:</strong> Score out of 100 — Pipeline 25pts · Won Revenue 40pts · Deal Registrations 20pts · Close Rate 15pts · All metrics normalized relative to top performer in 2026 data.
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem">
+    <span style="font-size:11px;color:#888780;font-weight:600">SORT BY</span>
+    <button class="tog on" id="${elId}-sort-score" onclick="scSort('${elId}','score')">Score</button>
+    <button class="tog" id="${elId}-sort-won" onclick="scSort('${elId}','won_rev')">Won Revenue</button>
+    <button class="tog" id="${elId}-sort-pipe" onclick="scSort('${elId}','pipe_rev')">Pipeline</button>
+    <button class="tog" id="${elId}-sort-dr" onclick="scSort('${elId}','dr_count')">Registrations</button>
+    <button class="tog" id="${elId}-sort-close" onclick="scSort('${elId}','close_rate')">Close Rate</button>
+    <span style="font-size:11px;color:#888780;font-weight:600;margin-left:8px">FILTER</span>
+    <button class="tog on" id="${elId}-tier-All" onclick="scFilter('${elId}','All')">All</button>
+    <button class="tog" id="${elId}-tier-Elite" onclick="scFilter('${elId}','Elite')">Elite</button>
+    <button class="tog" id="${elId}-tier-Strong" onclick="scFilter('${elId}','Strong')">Strong</button>
+    <button class="tog" id="${elId}-tier-Developing" onclick="scFilter('${elId}','Developing')">Developing</button>
+    <button class="tog" id="${elId}-tier-Early" onclick="scFilter('${elId}','Early')">Early</button>
+  </div>
+  <div id="${elId}-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>`;
+
+  // Store renderCards into already-initialised state
+  window[`_sc_${elId}`].renderCards = renderCards;
+  renderCards();
+}
+
+function renderEntScorecard() {
+  renderScorecardTab('tab-entscorecard', ENT_DATA, 'Enterprise Partner Scorecard', '2026 YTD performance across all partner channels', 'Enterprise');
+}
+
+function renderSellerScorecard() {
+  renderScorecardTab('tab-sellerscorecard', SELLER_DATA, 'Seller Partner Scorecard', '2026 YTD performance across all partner channels', 'Seller');
+}
+
+function scSort(elId, key) {
+  const state = window[`_sc_${elId}`];
+  state.sortKey = key;
+  ['score','won_rev','pipe_rev','dr_count','close_rate'].forEach(k => {
+    const btn = document.getElementById(`${elId}-sort-${k==='won_rev'?'won':k==='pipe_rev'?'pipe':k==='dr_count'?'dr':k==='close_rate'?'close':k}`);
+    if (btn) btn.className = 'tog' + (k===key?' on':'');
+  });
+  state.renderCards();
+}
+
+function scFilter(elId, tier) {
+  const state = window[`_sc_${elId}`];
+  state.filterTier = tier;
+  ['All','Elite','Strong','Developing','Early'].forEach(t => {
+    const btn = document.getElementById(`${elId}-tier-${t}`);
+    if (btn) btn.className = 'tog' + (t===tier?' on':'');
+  });
+  state.renderCards();
+}
+
 // ── ROUTING ───────────────────────────────────────────────────────────────────
-const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay'];
+const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay','entscorecard','sellerscorecard'];
 const rendered={};
 function gotoTab(t){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
@@ -1681,6 +1857,8 @@ function gotoTab(t){
     else if(t==='contacts')renderContactsTab();
     else if(t==='mktcal')renderMktCal();
     else if(t==='eventplay')renderEventPlay();
+    else if(t==='entscorecard')renderEntScorecard();
+    else if(t==='sellerscorecard')renderSellerScorecard();
     rendered[t]=true;
   }
 }
