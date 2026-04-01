@@ -403,6 +403,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
     <button class="nav-tab" onclick="gotoTab('eventplay')">Event playbook</button>
     <button class="nav-tab" onclick="gotoTab('entscorecard')">Enterprise scorecard</button>
     <button class="nav-tab" onclick="gotoTab('sellerscorecard')">Seller scorecard</button>
+    <button class="nav-tab" onclick="gotoTab('resourcing')">Resourcing plan</button>
   </div>
   <div id="tab-overview"></div>
   <div id="tab-affiliated" style="display:none"></div>
@@ -415,6 +416,7 @@ h1{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
   <div id="tab-eventplay" style="display:none"></div>
   <div id="tab-entscorecard" style="display:none"></div>
   <div id="tab-sellerscorecard" style="display:none"></div>
+  <div id="tab-resourcing" style="display:none"></div>
 </div>
 <script>
 function fmt(v){if(!v||v===0)return'$0';return'$'+(v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':Math.round(v).toString())}
@@ -1746,13 +1748,18 @@ function renderScorecardTab(elId, data, title, subtitle, entityLabel) {
 
   function getFiltered() {
     const st = window[`_sc_${elId}`];
-    return data
+    const activeData = st.data || data;
+    return activeData
       .filter(d => st.filterTier==='All' || scoreTier(d.score)===st.filterTier)
       .sort((a,b) => b[st.sortKey] - a[st.sortKey]);
   }
 
   function renderCards() {
     const filtered = getFiltered();
+    const st = window[`_sc_${elId}`];
+    const mPR = st.maxPipeRev || maxPipeRev;
+    const mWR = st.maxWonRev  || maxWonRev;
+    const mDR = st.maxDR      || maxDR;
     document.getElementById(`${elId}-cards`).innerHTML = filtered.map(d => {
       const c = scoreColor(d.score);
       const bg = scoreBg(d.score);
@@ -1765,9 +1772,9 @@ function renderScorecardTab(elId, data, title, subtitle, entityLabel) {
           ${scorecardGauge(d.score, 60)}
         </div>
         <div style="border-top:1px solid #EEEDEA;padding-top:10px">
-          ${metricBar('Wtd. Pipeline', d.pipe_rev, maxPipeRev, '#378ADD', '$')}
-          ${metricBar('Won revenue', d.won_rev, maxWonRev, '#059669', '$')}
-          ${metricBar('Registrations', d.dr_count, maxDR||1, '#EF9F27', '#')}
+          ${metricBar('Wtd. Pipeline', d.pipe_rev, mPR, '#378ADD', '$')}
+          ${metricBar('Won revenue', d.won_rev, mWR, '#059669', '$')}
+          ${metricBar('Registrations', d.dr_count, mDR||1, '#EF9F27', '#')}
           ${metricBar('Close rate', d.close_rate, 100, '#7F77DD', 'pct')}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid #EEEDEA">
@@ -1817,10 +1824,107 @@ function renderScorecardTab(elId, data, title, subtitle, entityLabel) {
 
 function renderEntScorecard() {
   renderScorecardTab('tab-entscorecard', ENT_DATA, 'Enterprise Partner Scorecard', '2026 YTD performance across all partner channels', 'Enterprise');
+  requestAnimationFrame(() => {
+    const el = document.getElementById('tab-entscorecard');
+    if (!el || document.getElementById('sc-ent-partner-filter')) return;
+    const partners = Object.keys(ENT_BY_PARTNER).sort();
+    const filterDiv = document.createElement('div');
+    filterDiv.id = 'sc-ent-partner-filter';
+    filterDiv.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;padding:10px 14px;background:#F5F4F0;border-radius:8px;border:1px solid #D3D1C7';
+    const allBtns = ['<span style="font-size:11px;color:#888780;font-weight:600;flex-shrink:0">PARTNER FILTER</span>',
+      '<button class="tog on" id="sc-ep-All" onclick="scEntPartnerFilter(this.id.slice(6))">All Partners</button>'];
+    window._scEntPartners = partners;
+    partners.forEach((p,i) => {
+      const safe = p.replace(/ /g,'_');
+      allBtns.push('<button class="tog" id="sc-ep-' + safe + '" onclick="scEntPartnerFilter(window._scEntPartners[' + i + '])">' + p + '</button>');
+    });
+    filterDiv.innerHTML = allBtns.join('');
+    const sortRow = el.querySelector('#tab-entscorecard-sort-score')?.closest('div[style*="display:flex"]');
+    if (sortRow) sortRow.parentNode.insertBefore(filterDiv, sortRow);
+    else el.insertBefore(filterDiv, el.children[2]);
+  });
+}
+
+function scEntPartnerFilter(partner) {
+  const state = window['_sc_tab-entscorecard'];
+  if (!state) return;
+  state.data = partner === 'All' ? ENT_DATA : (ENT_BY_PARTNER[partner] || []);
+  state.maxPipeRev = Math.max(...state.data.map(d=>d.pipe_rev), 1);
+  state.maxWonRev  = Math.max(...state.data.map(d=>d.won_rev), 1);
+  state.maxDR      = Math.max(...state.data.map(d=>d.dr_count), 1);
+  state.sortKey = 'score';
+  state.filterTier = 'All';
+  ['All','Elite','Strong','Developing','Early'].forEach(t => {
+    const btn = document.getElementById('tab-entscorecard-tier-' + t);
+    if (btn) btn.className = 'tog' + (t==='All' ? ' on' : '');
+  });
+  ['score','won','pipe','dr','close'].forEach(k => {
+    const btn = document.getElementById('tab-entscorecard-sort-' + k);
+    if (btn) btn.className = 'tog' + (k==='score' ? ' on' : '');
+  });
+  const allPartners = ['All', ...Object.keys(ENT_BY_PARTNER).sort()];
+  allPartners.forEach(p => {
+    const safe = p.replace(/ /g,'_');
+    const btn = document.getElementById('sc-ep-' + (p==='All'?'All':safe));
+    if (btn) btn.className = 'tog' + (p===partner ? ' on' : '');
+  });
+  state.renderCards();
 }
 
 function renderSellerScorecard() {
   renderScorecardTab('tab-sellerscorecard', SELLER_DATA, 'Seller Partner Scorecard', '2026 YTD performance across all partner channels', 'Seller');
+  // Add partner filter row after tab renders
+  requestAnimationFrame(() => {
+    const el = document.getElementById('tab-sellerscorecard');
+    if (!el || document.getElementById('sc-partner-filter')) return;
+    const partners = Object.keys(SELLER_BY_PARTNER).sort();
+    const filterDiv = document.createElement('div');
+    filterDiv.id = 'sc-partner-filter';
+    filterDiv.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;padding:10px 14px;background:#F5F4F0;border-radius:8px;border:1px solid #D3D1C7';
+    const allBtns = ['<span style="font-size:11px;color:#888780;font-weight:600;flex-shrink:0">PARTNER FILTER</span>',
+        '<button class="tog on" id="sc-p-All" onclick="scPartnerFilter(this.id.slice(5))">All Partners</button>'];
+      window._scPartners = partners;
+      partners.forEach((p,i) => {
+        const safe = p.replace(/ /g,'_');
+        allBtns.push('<button class="tog" id="sc-p-' + safe + '" onclick="scPartnerFilter(window._scPartners[' + i + '])">' + p + '</button>');
+      });
+      filterDiv.innerHTML = allBtns.join('');
+    // Insert before the sort/filter row
+    const sortRow = el.querySelector('#tab-sellerscorecard-sort-score')?.closest('div[style*="display:flex"]');
+    if (sortRow) sortRow.parentNode.insertBefore(filterDiv, sortRow);
+    else el.insertBefore(filterDiv, el.children[2]);
+  });
+}
+
+function scPartnerFilter(partner) {
+  const state = window['_sc_tab-sellerscorecard'];
+  if (!state) return;
+  // Switch data source
+  state.data = partner === 'All' ? SELLER_DATA : (SELLER_BY_PARTNER[partner] || []);
+  // Recalculate maxes for the filtered data
+  state.maxPipeRev = Math.max(...state.data.map(d=>d.pipe_rev), 1);
+  state.maxWonRev  = Math.max(...state.data.map(d=>d.won_rev), 1);
+  state.maxDR      = Math.max(...state.data.map(d=>d.dr_count), 1);
+  state.sortKey = 'score';
+  state.filterTier = 'All';
+  // Reset tier buttons
+  ['All','Elite','Strong','Developing','Early'].forEach(t => {
+    const btn = document.getElementById('tab-sellerscorecard-tier-' + t);
+    if (btn) btn.className = 'tog' + (t==='All' ? ' on' : '');
+  });
+  // Reset sort buttons
+  ['score','won','pipe','dr','close'].forEach(k => {
+    const btn = document.getElementById('tab-sellerscorecard-sort-' + k);
+    if (btn) btn.className = 'tog' + (k==='score' ? ' on' : '');
+  });
+  // Update partner buttons
+  const allPartners = ['All', ...Object.keys(SELLER_BY_PARTNER).sort()];
+  allPartners.forEach(p => {
+    const id = 'sc-p-' + p.replace(/ /g,'_');
+    const btn = document.getElementById(id);
+    if (btn) btn.className = 'tog' + (p===partner ? ' on' : '');
+  });
+  state.renderCards();
 }
 
 function scSort(elId, key) {
@@ -1843,8 +1947,266 @@ function scFilter(elId, tier) {
   state.renderCards();
 }
 
+
+// ── RESOURCING PLAN ───────────────────────────────────────────────────────────
+const RESOURCING = {
+  program: { lead: 'Matt Russell', exec: 'Ehren Seim' },
+  tiers: [
+    {
+      tier: 'Global GTM Service',
+      color: '#185FA5', bg: '#EEF5FF', border: '#93C5FD',
+      partners: [
+        {
+          name: 'MSFT', fullName: 'Microsoft',
+          roles: {
+            'Strategy / Ownership':    { name:'Lowell Messner',  open:false },
+            'Partner Mgmt / Admin':    { name:'Nada Ungvarsky',  open:false },
+            'Solution Lead':           { name:'Bill Curry',      open:false },
+            'Business Development':    { name:'Lowell Messner',  open:false },
+            'Marketing Lead':          { name:'Faiz Dharamsi',   open:false },
+          }
+        },
+        {
+          name: 'SAP', fullName: 'SAP',
+          roles: {
+            'Strategy / Ownership':    { name:'Luke McGrath',       open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',         open:true  },
+            'Solution Lead':           { name:'Sean Antenello',     open:false },
+            'Business Development':    { name:'Jordan Vukanovich',  open:false },
+            'Marketing Lead':          { name:'Faiz Dharamsi',      open:false },
+          }
+        },
+        {
+          name: 'AI (Cognition)', fullName: 'AI — Cognition',
+          roles: {
+            'Strategy / Ownership':    { name:'Devlin Liles',   open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Scott Poulin',   open:false },
+            'Business Development':    { name:'Devlin Liles',   open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',  open:false },
+          }
+        },
+        {
+          name: 'AI (Anthropic)', fullName: 'AI — Anthropic',
+          roles: {
+            'Strategy / Ownership':    { name:'Devlin Liles',   open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Scott Poulin',   open:false },
+            'Business Development':    { name:'Devlin Liles',   open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',  open:false },
+          }
+        },
+      ]
+    },
+    {
+      tier: 'Strategic Partners',
+      color: '#059669', bg: '#E1F5EE', border: '#6EE7B7',
+      partners: [
+        {
+          name: 'AWS', fullName: 'Amazon AWS',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',            open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',            open:true  },
+            'Solution Lead':           { name:'Maryna Boryshkevych',   open:false },
+            'Business Development':    { name:'Bryan Penner',          open:false },
+            'Marketing Lead':          { name:'Faiz Dharamsi',         open:false },
+          }
+        },
+        {
+          name: 'GOOG', fullName: 'Google Cloud',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',        open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',        open:true  },
+            'Solution Lead':           { name:'Sergey Vershinin',  open:false },
+            'Business Development':    { name:'Kyle Porter',       open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',     open:false },
+          }
+        },
+        {
+          name: 'DBX', fullName: 'Databricks',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',     open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Scott Poulin',   open:false },
+            'Business Development':    { name:'Ehren Seim',     open:false },
+            'Marketing Lead':          { name:'Faiz Dharamsi',  open:false },
+          }
+        },
+      ]
+    },
+    {
+      tier: 'Growth Partners',
+      color: '#EF9F27', bg: '#FFF8E6', border: '#EFD89A',
+      partners: [
+        {
+          name: 'CFLNT', fullName: 'Confluent',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',     open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Nick Larson',    open:false },
+            'Business Development':    { name:'Russell Maloney',open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',  open:false },
+          }
+        },
+        {
+          name: 'TMPRL', fullName: 'Temporal',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',     open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Torey Lomenda',  open:false },
+            'Business Development':    { name:'Ehren Seim',     open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',  open:false },
+          }
+        },
+        {
+          name: 'SFLK', fullName: 'Snowflake',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',     open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'Rich McGraw',    open:false },
+            'Business Development':    { name:'Ehren Seim',     open:false },
+            'Marketing Lead':          { name:'Sarthak Routh',  open:false },
+          }
+        },
+      ]
+    },
+    {
+      tier: 'Emerging Partners',
+      color: '#7F77DD', bg: '#F0EFFE', border: '#C4BFEF',
+      partners: [
+        {
+          name: 'Honeycomb', fullName: 'Honeycomb',
+          roles: {
+            'Strategy / Ownership':    { name:'Matt Russell',  open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',    open:true  },
+            'Solution Lead':           { name:'N/A',           open:false },
+            'Business Development':    { name:'N/A',           open:false },
+            'Marketing Lead':          { name:'N/A',           open:false },
+          }
+        },
+        {
+          name: 'dbtLabs', fullName: 'dbt Labs',
+          roles: {
+            'Strategy / Ownership':    { name:'Ehren Seim',    open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',    open:true  },
+            'Solution Lead':           { name:'N/A',           open:false },
+            'Business Development':    { name:'N/A',           open:false },
+            'Marketing Lead':          { name:'N/A',           open:false },
+          }
+        },
+        {
+          name: 'Solace', fullName: 'Solace',
+          roles: {
+            'Strategy / Ownership':    { name:'Matt Russell',  open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',    open:true  },
+            'Solution Lead':           { name:'N/A',           open:false },
+            'Business Development':    { name:'N/A',           open:false },
+            'Marketing Lead':          { name:'N/A',           open:false },
+          }
+        },
+        {
+          name: 'Akka', fullName: 'Akka',
+          roles: {
+            'Strategy / Ownership':    { name:'Lyle Rousselle', open:false },
+            'Partner Mgmt / Admin':    { name:'Ehren Seim',     open:true  },
+            'Solution Lead':           { name:'N/A',            open:false },
+            'Business Development':    { name:'N/A',            open:false },
+            'Marketing Lead':          { name:'N/A',            open:false },
+          }
+        },
+      ]
+    },
+  ]
+};
+
+const ENT_BY_PARTNER = {"Amazon AWS":[{"name":"Calgary, AB","score":72.5,"score_pipeline":25.0,"score_won":40.0,"score_dr":0.0,"score_close":7.5,"pipe_deals":9,"pipe_rev":2501878,"won_rev":1769954,"won_deals":9,"dr_count":0,"close_rate":50.0},{"name":"Dallas, TX","score":20.8,"score_pipeline":0.8,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":83160,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Austin, TX","score":17.6,"score_pipeline":0.7,"score_won":9.3,"score_dr":0.0,"score_close":7.5,"pipe_deals":1,"pipe_rev":75000,"won_rev":412000,"won_deals":1,"dr_count":0,"close_rate":50.0},{"name":"Ohio, OH","score":10.8,"score_pipeline":1.5,"score_won":1.8,"score_dr":0.0,"score_close":7.5,"pipe_deals":1,"pipe_rev":150000,"won_rev":80000,"won_deals":1,"dr_count":0,"close_rate":50.0},{"name":"Vancouver, BC","score":0.2,"score_pipeline":0.2,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":18349,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Chicago, IL","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10800,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Toronto, ON","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Confluent":[{"name":"Minnesota, MN","score":45.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":3,"pipe_rev":160000,"won_rev":0,"won_deals":0,"dr_count":6,"close_rate":0.0},{"name":"Dallas, TX","score":13.5,"score_pipeline":10.2,"score_won":0.0,"score_dr":3.3,"score_close":0.0,"pipe_deals":1,"pipe_rev":65000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Chicago, IL","score":1.6,"score_pipeline":1.6,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Databricks":[{"name":"Minnesota, MN","score":80.0,"score_pipeline":25.0,"score_won":40.0,"score_dr":10.0,"score_close":5.0,"pipe_deals":2,"pipe_rev":275000,"won_rev":1852500,"won_deals":1,"dr_count":1,"close_rate":33.3},{"name":"Toronto, ON","score":29.1,"score_pipeline":9.1,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":100000,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Dallas, TX","score":18.2,"score_pipeline":0.0,"score_won":3.2,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":150000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Houston, TX","score":12.5,"score_pipeline":2.5,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":28000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Winnipeg, MB","score":4.3,"score_pipeline":4.3,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":47500,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Corporate","score":1.1,"score_pipeline":1.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":12500,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Google Cloud":[{"name":"Minnesota, MN","score":80.6,"score_pipeline":8.6,"score_won":40.0,"score_dr":20.0,"score_close":12.0,"pipe_deals":1,"pipe_rev":172800,"won_rev":835000,"won_deals":4,"dr_count":3,"close_rate":80.0},{"name":"Austin, TX","score":31.7,"score_pipeline":25.0,"score_won":0.0,"score_dr":6.7,"score_close":0.0,"pipe_deals":1,"pipe_rev":500000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Ottawa, ON","score":31.1,"score_pipeline":5.5,"score_won":2.6,"score_dr":20.0,"score_close":3.0,"pipe_deals":4,"pipe_rev":109250,"won_rev":55000,"won_deals":1,"dr_count":3,"close_rate":20.0},{"name":"Vancouver, BC","score":18.7,"score_pipeline":0.0,"score_won":3.7,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":77610,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Houston, TX","score":14.4,"score_pipeline":2.5,"score_won":0.3,"score_dr":6.7,"score_close":5.0,"pipe_deals":2,"pipe_rev":50000,"won_rev":5500,"won_deals":1,"dr_count":1,"close_rate":33.3},{"name":"Winnipeg, MB","score":6.7,"score_pipeline":0.0,"score_won":0.0,"score_dr":6.7,"score_close":0.0,"pipe_deals":0,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0}],"Microsoft":[{"name":"Ohio, OH","score":60.8,"score_pipeline":7.3,"score_won":29.9,"score_dr":20.0,"score_close":3.6,"pipe_deals":25,"pipe_rev":2718085,"won_rev":2273200,"won_deals":8,"dr_count":23,"close_rate":24.2},{"name":"Minnesota, MN","score":49.1,"score_pipeline":0.8,"score_won":40.0,"score_dr":0.9,"score_close":7.5,"pipe_deals":3,"pipe_rev":282986,"won_rev":3043140,"won_deals":3,"dr_count":1,"close_rate":50.0},{"name":"Calgary, AB","score":41.1,"score_pipeline":25.0,"score_won":5.5,"score_dr":4.3,"score_close":6.3,"pipe_deals":7,"pipe_rev":9292075,"won_rev":416268,"won_deals":5,"dr_count":5,"close_rate":41.7},{"name":"Winnipeg, MB","score":27.8,"score_pipeline":0.2,"score_won":13.0,"score_dr":4.3,"score_close":10.2,"pipe_deals":7,"pipe_rev":68810,"won_rev":990675,"won_deals":15,"dr_count":5,"close_rate":68.2},{"name":"Atlanta, GA","score":25.9,"score_pipeline":3.9,"score_won":6.3,"score_dr":11.3,"score_close":4.4,"pipe_deals":17,"pipe_rev":1444200,"won_rev":481100,"won_deals":7,"dr_count":13,"close_rate":29.2},{"name":"Houston, TX","score":20.0,"score_pipeline":3.2,"score_won":3.9,"score_dr":7.0,"score_close":6.0,"pipe_deals":6,"pipe_rev":1182530,"won_rev":296400,"won_deals":4,"dr_count":8,"close_rate":40.0},{"name":"Toronto, ON","score":16.0,"score_pipeline":0.1,"score_won":5.6,"score_dr":1.7,"score_close":8.6,"pipe_deals":3,"pipe_rev":35996,"won_rev":426924,"won_deals":4,"dr_count":2,"close_rate":57.1},{"name":"Austin, TX","score":13.8,"score_pipeline":0.4,"score_won":3.3,"score_dr":2.6,"score_close":7.5,"pipe_deals":4,"pipe_rev":145000,"won_rev":251300,"won_deals":4,"dr_count":3,"close_rate":50.0},{"name":"Chicago, IL","score":12.3,"score_pipeline":3.1,"score_won":1.2,"score_dr":4.3,"score_close":3.8,"pipe_deals":9,"pipe_rev":1144225,"won_rev":88000,"won_deals":3,"dr_count":5,"close_rate":25.0},{"name":"Dallas, TX","score":11.7,"score_pipeline":3.2,"score_won":3.2,"score_dr":2.6,"score_close":2.8,"pipe_deals":13,"pipe_rev":1178205,"won_rev":240200,"won_deals":3,"dr_count":3,"close_rate":18.8},{"name":"Corporate","score":2.6,"score_pipeline":1.7,"score_won":0.0,"score_dr":0.9,"score_close":0.0,"pipe_deals":4,"pipe_rev":648275,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Ottawa, ON","score":1.7,"score_pipeline":0.0,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":0,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Vancouver, BC","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":3,"pipe_rev":30020,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"SAP":[{"name":"Toronto, ON","score":71.4,"score_pipeline":25.0,"score_won":40.0,"score_dr":0.0,"score_close":6.4,"pipe_deals":16,"pipe_rev":982872,"won_rev":995763,"won_deals":12,"dr_count":0,"close_rate":42.9},{"name":"Calgary, AB","score":17.7,"score_pipeline":0.0,"score_won":2.7,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":66400,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Houston, TX","score":16.5,"score_pipeline":0.0,"score_won":1.5,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":38400,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Minnesota, MN","score":0.3,"score_pipeline":0.3,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Snowflake":[{"name":"Atlanta, GA","score":55.0,"score_pipeline":0.0,"score_won":40.0,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":87000,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Minnesota, MN","score":45.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":37500,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Austin, TX","score":32.5,"score_pipeline":12.5,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":18750,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0}]};
+
+const SELLER_BY_PARTNER = {"Amazon AWS":[{"name":"Michael McCullough","score":72.5,"score_pipeline":25.0,"score_won":40.0,"score_dr":0.0,"score_close":7.5,"pipe_deals":8,"pipe_rev":2391783,"won_rev":1751945,"won_deals":8,"dr_count":0,"close_rate":50.0},{"name":"Shalini Arora","score":24.4,"score_pipeline":0.0,"score_won":9.4,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":412000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Diana Stevens","score":20.9,"score_pipeline":0.9,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":83160,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Joshua Harrison","score":10.9,"score_pipeline":1.6,"score_won":1.8,"score_dr":0.0,"score_close":7.5,"pipe_deals":1,"pipe_rev":150000,"won_rev":80000,"won_deals":1,"dr_count":0,"close_rate":50.0},{"name":"Nicole Hilland","score":9.1,"score_pipeline":1.2,"score_won":0.4,"score_dr":0.0,"score_close":7.5,"pipe_deals":1,"pipe_rev":110095,"won_rev":18009,"won_deals":1,"dr_count":0,"close_rate":50.0},{"name":"Minu Mohan","score":0.8,"score_pipeline":0.8,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":75000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Bryan Penner","score":0.2,"score_pipeline":0.2,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":18349,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"David Sidwell","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10800,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Jordan Vukanovich","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Confluent":[{"name":"Jeffrey Schuemann","score":45.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":125000,"won_rev":0,"won_deals":0,"dr_count":5,"close_rate":0.0},{"name":"Diana Stevens","score":17.0,"score_pipeline":13.0,"score_won":0.0,"score_dr":4.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":65000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Jay Brettingen","score":11.0,"score_pipeline":7.0,"score_won":0.0,"score_dr":4.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":35000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Russell Maloney","score":2.0,"score_pipeline":2.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Databricks":[{"name":"Matt Russell","score":55.0,"score_pipeline":0.0,"score_won":40.0,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":1852500,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Thomas Distefano","score":31.2,"score_pipeline":11.2,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":3,"pipe_rev":112500,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Jay Brettingen","score":25.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":250000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Alexander Powell","score":18.2,"score_pipeline":0.0,"score_won":3.2,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":150000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Mark Remington","score":12.8,"score_pipeline":2.8,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":28000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Kyla Higgs","score":12.5,"score_pipeline":2.5,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":25000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Jennifer Spaulding","score":4.8,"score_pipeline":4.8,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":47500,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Google Cloud":[{"name":"Rob Neitge","score":65.0,"score_pipeline":0.0,"score_won":40.0,"score_dr":10.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":510000,"won_deals":1,"dr_count":1,"close_rate":100.0},{"name":"Minu Mohan","score":35.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":500000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Paul Cramer","score":33.8,"score_pipeline":0.0,"score_won":18.8,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":240000,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Steve Banks","score":32.8,"score_pipeline":8.6,"score_won":6.7,"score_dr":10.0,"score_close":7.5,"pipe_deals":1,"pipe_rev":172800,"won_rev":85000,"won_deals":1,"dr_count":1,"close_rate":50.0},{"name":"Michael McLachlan","score":24.5,"score_pipeline":4.5,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":3,"pipe_rev":90500,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Raymond Lum","score":21.1,"score_pipeline":0.0,"score_won":6.1,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":77610,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Lyle Rousselle","score":19.3,"score_pipeline":0.0,"score_won":4.3,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":55000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Mark Remington","score":17.9,"score_pipeline":2.5,"score_won":0.4,"score_dr":10.0,"score_close":5.0,"pipe_deals":2,"pipe_rev":50000,"won_rev":5500,"won_deals":1,"dr_count":1,"close_rate":33.3},{"name":"Benjamin Brandreth","score":10.9,"score_pipeline":0.9,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":18750,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Jeffrey Schuemann","score":10.0,"score_pipeline":0.0,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":0,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Laura Hofmeister","score":10.0,"score_pipeline":0.0,"score_won":0.0,"score_dr":10.0,"score_close":0.0,"pipe_deals":0,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0}],"Microsoft":[{"name":"Matt Russell","score":50.2,"score_pipeline":2.5,"score_won":40.0,"score_dr":1.7,"score_close":6.0,"pipe_deals":3,"pipe_rev":915261,"won_rev":2793140,"won_deals":2,"dr_count":1,"close_rate":40.0},{"name":"Jacqueline Bickel","score":44.9,"score_pipeline":0.4,"score_won":28.9,"score_dr":6.7,"score_close":9.0,"pipe_deals":2,"pipe_rev":150000,"won_rev":2015000,"won_deals":3,"dr_count":4,"close_rate":60.0},{"name":"Jay Alexander","score":33.4,"score_pipeline":0.8,"score_won":6.6,"score_dr":20.0,"score_close":6.0,"pipe_deals":9,"pipe_rev":312250,"won_rev":459500,"won_deals":6,"dr_count":12,"close_rate":40.0},{"name":"Stephen Johnson","score":26.3,"score_pipeline":2.9,"score_won":4.2,"score_dr":11.7,"score_close":7.5,"pipe_deals":4,"pipe_rev":1055600,"won_rev":296400,"won_deals":4,"dr_count":7,"close_rate":50.0},{"name":"Kyle Thorburn","score":26.1,"score_pipeline":0.1,"score_won":13.1,"score_dr":1.7,"score_close":11.2,"pipe_deals":4,"pipe_rev":45250,"won_rev":912039,"won_deals":12,"dr_count":1,"close_rate":75.0},{"name":"Michael McCullough","score":25.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":9207006,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Abhinit Pandey","score":20.3,"score_pipeline":0.1,"score_won":4.3,"score_dr":8.3,"score_close":7.5,"pipe_deals":3,"pipe_rev":45492,"won_rev":302861,"won_deals":3,"dr_count":5,"close_rate":50.0},{"name":"Aimee Ernst","score":20.3,"score_pipeline":0.3,"score_won":0.9,"score_dr":15.0,"score_close":4.1,"pipe_deals":8,"pipe_rev":100485,"won_rev":66000,"won_deals":3,"dr_count":9,"close_rate":27.3},{"name":"David Sidwell","score":18.9,"score_pipeline":0.0,"score_won":0.5,"score_dr":3.3,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":38000,"won_deals":1,"dr_count":2,"close_rate":100.0},{"name":"Lowell Messner","score":18.8,"score_pipeline":1.5,"score_won":1.2,"score_dr":15.0,"score_close":1.1,"pipe_deals":13,"pipe_rev":567600,"won_rev":84000,"won_deals":1,"dr_count":9,"close_rate":7.1},{"name":"Laura Juberian","score":18.6,"score_pipeline":0.0,"score_won":3.6,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":250000,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Laura Hofmeister","score":17.7,"score_pipeline":0.0,"score_won":1.0,"score_dr":1.7,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":72036,"won_deals":1,"dr_count":1,"close_rate":100.0},{"name":"David Cranstoun","score":17.0,"score_pipeline":0.0,"score_won":2.0,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":138130,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Jeffrey Armstrong","score":13.6,"score_pipeline":0.1,"score_won":4.1,"score_dr":3.3,"score_close":6.0,"pipe_deals":3,"pipe_rev":35996,"won_rev":288794,"won_deals":2,"dr_count":2,"close_rate":40.0},{"name":"Shalini Arora","score":13.5,"score_pipeline":0.3,"score_won":2.4,"score_dr":3.3,"score_close":7.5,"pipe_deals":2,"pipe_rev":95000,"won_rev":167300,"won_deals":2,"dr_count":2,"close_rate":50.0},{"name":"Jennifer Spaulding","score":11.0,"score_pipeline":0.1,"score_won":0.1,"score_dr":3.3,"score_close":7.5,"pipe_deals":2,"pipe_rev":20320,"won_rev":6600,"won_deals":2,"dr_count":2,"close_rate":50.0},{"name":"Joshua Harrison","score":11.0,"score_pipeline":0.3,"score_won":1.5,"score_dr":1.7,"score_close":7.5,"pipe_deals":1,"pipe_rev":100000,"won_rev":108200,"won_deals":1,"dr_count":1,"close_rate":50.0},{"name":"Oscar Velazquez","score":10.5,"score_pipeline":0.1,"score_won":1.2,"score_dr":1.7,"score_close":7.5,"pipe_deals":2,"pipe_rev":50000,"won_rev":84000,"won_deals":2,"dr_count":1,"close_rate":50.0},{"name":"Alexander Powell","score":10.1,"score_pipeline":0.1,"score_won":0.7,"score_dr":3.3,"score_close":6.0,"pipe_deals":3,"pipe_rev":19500,"won_rev":48200,"won_deals":2,"dr_count":2,"close_rate":40.0},{"name":"Paul Collins","score":9.5,"score_pipeline":0.0,"score_won":0.3,"score_dr":1.7,"score_close":7.5,"pipe_deals":1,"pipe_rev":1000,"won_rev":21600,"won_deals":1,"dr_count":1,"close_rate":50.0},{"name":"Nicole Hilland","score":9.2,"score_pipeline":0.1,"score_won":1.6,"score_dr":0.0,"score_close":7.5,"pipe_deals":2,"pipe_rev":39576,"won_rev":113407,"won_deals":2,"dr_count":0,"close_rate":50.0},{"name":"Diana Stevens","score":7.4,"score_pipeline":1.7,"score_won":2.7,"score_dr":0.0,"score_close":3.0,"pipe_deals":4,"pipe_rev":616655,"won_rev":192000,"won_deals":1,"dr_count":0,"close_rate":20.0},{"name":"Anthony Cacioppo","score":6.6,"score_pipeline":4.9,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":1,"pipe_rev":1800000,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Lisa Kimbrel","score":6.3,"score_pipeline":2.9,"score_won":0.0,"score_dr":3.3,"score_close":0.0,"pipe_deals":3,"pipe_rev":1077875,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Russell Maloney","score":6.3,"score_pipeline":0.2,"score_won":0.7,"score_dr":1.7,"score_close":3.8,"pipe_deals":6,"pipe_rev":66350,"won_rev":50000,"won_deals":2,"dr_count":1,"close_rate":25.0},{"name":"Sandeep Rajeev","score":3.3,"score_pipeline":0.0,"score_won":0.0,"score_dr":3.3,"score_close":0.0,"pipe_deals":0,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":2,"close_rate":0.0},{"name":"Allison Jordan","score":2.9,"score_pipeline":2.9,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":6,"pipe_rev":1055950,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Derek Nwamadi","score":2.1,"score_pipeline":0.4,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":3,"pipe_rev":160750,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Rod Giesbrecht","score":1.7,"score_pipeline":0.0,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":1,"pipe_rev":3240,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Steven Pfiffner","score":1.7,"score_pipeline":0.0,"score_won":0.0,"score_dr":1.7,"score_close":0.0,"pipe_deals":2,"pipe_rev":10430,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Mark Miesner","score":1.0,"score_pipeline":1.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":356300,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Mark Remington","score":0.3,"score_pipeline":0.3,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":120000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"William Bailey","score":0.2,"score_pipeline":0.2,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":75000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"David O'Hara","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":25000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Toren Huntley","score":0.1,"score_pipeline":0.1,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":3,"pipe_rev":30020,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Kyla Higgs","score":0.0,"score_pipeline":0.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":2,"pipe_rev":12500,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0},{"name":"Nada Ungvarsky","score":0.0,"score_pipeline":0.0,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":0,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"SAP":[{"name":"Jordan Vukanovich","score":71.6,"score_pipeline":25.0,"score_won":40.0,"score_dr":0.0,"score_close":6.6,"pipe_deals":9,"pipe_rev":595000,"won_rev":553600,"won_deals":7,"dr_count":0,"close_rate":43.8},{"name":"David Cranstoun","score":54.5,"score_pipeline":16.3,"score_won":31.9,"score_dr":0.0,"score_close":6.3,"pipe_deals":7,"pipe_rev":387872,"won_rev":442163,"won_deals":5,"dr_count":0,"close_rate":41.7},{"name":"Kevin MacPhie","score":19.8,"score_pipeline":0.0,"score_won":4.8,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":66400,"won_deals":1,"dr_count":0,"close_rate":100.0},{"name":"Stephen Johnson","score":17.8,"score_pipeline":0.0,"score_won":2.8,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":38400,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Rob Neitge","score":0.4,"score_pipeline":0.4,"score_won":0.0,"score_dr":0.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":10000,"won_rev":0,"won_deals":0,"dr_count":0,"close_rate":0.0}],"Snowflake":[{"name":"William Bailey","score":55.0,"score_pipeline":0.0,"score_won":40.0,"score_dr":0.0,"score_close":15.0,"pipe_deals":0,"pipe_rev":0,"won_rev":87000,"won_deals":2,"dr_count":0,"close_rate":100.0},{"name":"Matt Russell","score":45.0,"score_pipeline":25.0,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":37500,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0},{"name":"Shalini Arora","score":32.5,"score_pipeline":12.5,"score_won":0.0,"score_dr":20.0,"score_close":0.0,"pipe_deals":1,"pipe_rev":18750,"won_rev":0,"won_deals":0,"dr_count":1,"close_rate":0.0}]};
+
+const ROLES = ['Strategy / Ownership','Partner Mgmt / Admin','Solution Lead','Business Development','Marketing Lead'];
+
+function renderResourcing() {
+  const el = document.getElementById('tab-resourcing');
+
+  // Summary counts
+  const totalPartners = RESOURCING.tiers.reduce((s,t)=>s+t.partners.length,0);
+  const openPositions = RESOURCING.tiers.reduce((s,t)=>
+    s+t.partners.reduce((ps,p)=>ps+Object.values(p.roles).filter(r=>r&&r.open).length,0),0);
+  const namedPeople = new Set(RESOURCING.tiers.flatMap(t=>t.partners.flatMap(p=>Object.values(p.roles).filter(r=>r&&!r.open).map(r=>r.name))));
+
+  function personChip(entry) {
+    if (!entry || !entry.name) return `<span style="color:#BBBBBB;font-size:10px;font-style:italic">TBD</span>`;
+    const {name, open} = entry;
+    if (name === 'N/A') return `<span style="color:#BBBBBB;font-size:10px;font-style:italic">N/A</span>`;
+    if (open) {
+      return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;background:#FFF8E6;border:1px solid #EFD89A;font-size:10px;color:#B45309;font-weight:600" title="Open position — ${name} is temporary placeholder">
+        <span>⚠</span>${name} <span style="font-weight:400;opacity:0.7">(temp)</span>
+      </span>`;
+    }
+    return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;background:#F5F4F0;border:1px solid #D3D1C7;font-size:10px;color:#1a1a18;font-weight:500">
+      ${name}
+    </span>`;
+  }
+
+  const tiersHTML = RESOURCING.tiers.map(tier => {
+    const partnerCols = tier.partners.map(p => `
+      <div style="flex:1;min-width:160px">
+        <div style="background:${tier.color};color:#fff;padding:6px 10px;border-radius:6px;text-align:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700">${p.name}</div>
+          <div style="font-size:10px;opacity:0.85">${p.fullName}</div>
+        </div>
+        ${ROLES.map(role => `
+          <div style="padding:5px 2px;border-bottom:1px solid #EEEDEA;min-height:32px;display:flex;align-items:center">
+            ${personChip(p.roles[role])}
+          </div>`).join('')}
+      </div>`).join('');
+
+    const roleRows2 = ROLES.map(role =>
+      '<div style="padding:5px 0;border-bottom:1px solid #EEEDEA;min-height:32px;display:flex;align-items:center;font-size:10px;font-weight:600;color:#888780">' +
+      role + '</div>'
+    ).join('');
+    const roleLabels = '<div style="width:160px;flex-shrink:0">' +
+      '<div style="height:52px;display:flex;align-items:flex-end;padding-bottom:8px">' +
+      '<span style="font-size:10px;font-weight:700;color:' + tier.color + ';text-transform:uppercase;letter-spacing:.06em">' + tier.tier + '</span></div>' +
+      roleRows2 + '</div>';
+
+    return `<div style="background:#fff;border:1px solid ${tier.border};border-radius:12px;padding:14px 16px;margin-bottom:1rem;border-top:3px solid ${tier.color}">
+      <div style="display:flex;gap:12px;overflow-x:auto">
+        ${roleLabels}
+        <div style="display:flex;gap:10px;flex:1;min-width:0">
+          ${partnerCols}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+  ${metricCards([
+    {l:'Program Lead',    v:'Matt Russell',  s:'Overall partner program',    cls:'won'},
+    {l:'Executive Sponsor',v:'Ehren Seim',   s:'Strategy & relationships'},
+    {l:'Total Partners',  v:String(totalPartners), s:'Across all tiers'},
+    {l:'Open Positions',  v:String(openPositions), s:'Roles to be filled',   cls:'pipeline'},
+  ])}
+  <div style="background:#EEF5FF;border:1px solid #D3D1C7;border-radius:8px;padding:10px 14px;margin-bottom:1.25rem;font-size:11px;color:#1A3A6A;line-height:1.6">
+    <strong>Role definitions:</strong>
+    <strong>Strategy/Ownership</strong> — accountable for the partner relationship and joint GTM plan ·
+    <strong>Partner Mgmt/Admin</strong> — day-to-day coordination, enablement, and co-sell operations ·
+    <strong>Solution Lead</strong> — technical champion and practice lead for the partner's technology ·
+    <strong>Business Development</strong> — pipeline generation and co-sell execution ·
+    <strong>Marketing Lead</strong> — campaign co-ordination and demand generation
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;font-size:11px;color:#888780">
+    <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;background:#F5F4F0;border:1px solid #D3D1C7;font-size:10px;color:#1a1a18;font-weight:500">Named person</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:8px;background:#FFF8E6;border:1px solid #EFD89A;font-size:10px;color:#B45309;font-weight:600">⚠ Name (temp) = open position</span>
+    <span style="color:#BBBBBB;font-size:10px;font-style:italic;margin-left:4px">TBD = not yet assigned</span>
+  </div>
+
+  ${tiersHTML}`;
+}
+
 // ── ROUTING ───────────────────────────────────────────────────────────────────
-const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay','entscorecard','sellerscorecard'];
+const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay','entscorecard','sellerscorecard','resourcing'];
 const rendered={};
 function gotoTab(t){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
@@ -1861,6 +2223,7 @@ function gotoTab(t){
     else if(t==='eventplay')renderEventPlay();
     else if(t==='entscorecard')renderEntScorecard();
     else if(t==='sellerscorecard')renderSellerScorecard();
+    else if(t==='resourcing')renderResourcing();
     rendered[t]=true;
   }
 }
