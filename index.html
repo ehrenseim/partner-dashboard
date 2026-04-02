@@ -869,6 +869,25 @@ function togPClose(type,mode){
   document.getElementById(type+'-cl-c').className='tog'+(mode==='count'?' on':'');
 }
 
+
+// ── MICROSOFT SALES ASSIST DATA ───────────────────────────────────────────────
+const MSFT_SA = {
+  // Won revenue by month: SA = Sales Assist Yes, NSA = No/blank
+  won_sa_26:  {'2026-01':87000,  '2026-02':837353, '2026-03':2208781},
+  won_nsa_26: {'2026-01':3696070,'2026-02':1444045,'2026-03':562498},
+  won_sa_25:  {'2025-05':226670, '2025-06':680000, '2025-08':15000, '2025-12':98518},
+  won_nsa_25: {'2025-01':1268872,'2025-02':803500,'2025-03':787273,'2025-04':697109,
+               '2025-05':3177899,'2025-06':321434,'2025-07':2094752,'2025-08':268187,
+               '2025-09':818089,'2025-10':679562,'2025-11':1750302,'2025-12':2644600},
+  // Summary stats
+  sa_deals_26: 22, sa_rev_26: 3133134, sa_avg_26: 142415,
+  nsa_deals_26: 38, nsa_rev_26: 5709613, nsa_avg_26: 150253,
+  sa_deals_all: 28, sa_rev_all: 4153322, sa_avg_all: 148333,
+  nsa_deals_all: 186, nsa_rev_all: 21021192, nsa_avg_all: 113017,
+  // Note: close rate can't be split by SA since open pipeline doesn't have SA field
+  // But SA deals avg size IS higher — $148K vs $113K
+};
+
 // ── WON TAB ───────────────────────────────────────────────────────────────────
 function renderWonTab(){
   document.getElementById('tab-won').innerHTML=metricCards([
@@ -929,6 +948,71 @@ function renderWonTab(){
   const wp25=mergePartnerRev(['won_aff25','won_cs25']);
   barH('won-pa26',wp26.map(x=>x[0]),[{data:wp26.map(x=>x[1]),backgroundColor:'#059669'}]);
   barH('won-pa25',wp25.map(x=>x[0]),[{data:wp25.map(x=>x[1]),backgroundColor:'#93C5FD'}]);
+
+  // ── Microsoft Sales Assist section ──────────────────────────────────────────
+  const wonEl = document.getElementById('tab-won');
+
+  // Add SA chart card HTML
+  const saDiv = document.createElement('div');
+  saDiv.innerHTML =
+    '<div class="charts-grid" style="margin-top:1.25rem">' +
+      '<div class="chart-card">' +
+        '<div class="chart-title">Sales Assist — Won Revenue by Month (2025)</div>' +
+        '<div class="note">Full year 2025 · SA field sparsely populated in 2025</div>' +
+        '<div class="legend"><span><span class="ld" style="background:#F59E0B"></span>With SA</span><span><span class="ld" style="background:#059669"></span>Without SA</span></div>' +
+        '<div style="position:relative;height:220px"><div id="won-sa-2025" style="width:100%;height:100%"></div></div>' +
+      '</div>' +
+      '<div class="chart-card">' +
+        '<div class="chart-title">Sales Assist — Won Revenue by Month (2026)</div>' +
+        '<div class="note">Q1 2026 · SA revenue surpassed non-SA in March</div>' +
+        '<div class="legend"><span><span class="ld" style="background:#F59E0B"></span>With SA</span><span><span class="ld" style="background:#059669"></span>Without SA</span></div>' +
+        '<div style="position:relative;height:220px"><div id="won-sa-2026" style="width:100%;height:100%"></div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="charts-grid" style="margin-top:1.25rem">' +
+      '<div class="chart-card" style="border-top:3px solid #F59E0B">' +
+        '<div class="chart-title">Avg deal size — with Sales Assist</div>' +
+        '<div style="font-size:28px;font-weight:700;color:#D97706;margin:8px 0">' + fmt(MSFT_SA.sa_avg_all) + '</div>' +
+        '<div style="font-size:11px;color:#888780">' + MSFT_SA.sa_deals_all + ' deals · 2025–2026</div>' +
+        '<div style="margin-top:8px;font-size:11px;color:#1a1a18">Total won: <strong>' + fmt(MSFT_SA.sa_rev_all) + '</strong></div>' +
+      '</div>' +
+      '<div class="chart-card" style="border-top:3px solid #059669">' +
+        '<div class="chart-title">Avg deal size — without Sales Assist</div>' +
+        '<div style="font-size:28px;font-weight:700;color:#059669;margin:8px 0">' + fmt(MSFT_SA.nsa_avg_all) + '</div>' +
+        '<div style="font-size:11px;color:#888780">' + MSFT_SA.nsa_deals_all + ' deals · 2025–2026</div>' +
+        '<div style="margin-top:8px;font-size:11px;color:#1a1a18">Total won: <strong>' + fmt(MSFT_SA.nsa_rev_all) + '</strong></div>' +
+      '</div>' +
+      '<div class="chart-card" style="border-top:3px solid #378ADD">' +
+        '<div class="chart-title">Deal size lift with Sales Assist</div>' +
+        '<div style="font-size:28px;font-weight:700;color:#378ADD;margin:8px 0">+' + Math.round((MSFT_SA.sa_avg_all/MSFT_SA.nsa_avg_all-1)*100) + '%</div>' +
+        '<div style="font-size:11px;color:#888780">Higher avg deal size vs without SA</div>' +
+        '<div style="margin-top:8px;font-size:11px;color:#1a1a18">SA covers <strong>' + Math.round(MSFT_SA.sa_deals_all/(MSFT_SA.sa_deals_all+MSFT_SA.nsa_deals_all)*100) + '%</strong> of all MSFT won deals</div>' +
+      '</div>' +
+      '<div class="chart-card" style="border-top:3px solid #888780">' +
+        '<div class="chart-title">2026 SA trend (Q1)</div>' +
+        '<div style="font-size:11px;color:#888780;margin-top:6px;line-height:1.8">' +
+          '<div>Jan — SA: $87K · No-SA: $3.7M</div>' +
+          '<div>Feb — SA: $837K · No-SA: $1.4M</div>' +
+          '<div style="color:#D97706;font-weight:600">Mar — SA: $2.2M · No-SA: $562K ↑ SA dominates</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:10px 14px;margin-top:1rem;font-size:12px;color:#5A4010;line-height:1.6">' +
+      '<strong>⚠ Note on close rate:</strong> The open pipeline file does not include the Sales Assist field, so a direct close rate comparison (SA vs non-SA) cannot be computed from current data. ' +
+      'What we can confirm: deals with Sales Assist average <strong>+' + Math.round((MSFT_SA.sa_avg_all/MSFT_SA.nsa_avg_all-1)*100) + '% higher deal size</strong> ($' + Math.round(MSFT_SA.sa_avg_all/1e3) + 'K vs $' + Math.round(MSFT_SA.nsa_avg_all/1e3) + 'K), and SA revenue surpassed non-SA in March 2026 for the first time.' +
+    '</div>';
+  wonEl.appendChild(saDiv);
+
+  // Render the SA bar chart
+  const MON_W2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  bar('won-sa-2025', MON_W2, [
+    {label:'With SA',    data:MON_W2.map((_,i)=>MSFT_SA.won_sa_25['2025-'+String(i+1).padStart(2,'0')]||0),  backgroundColor:'#F59E0B'},
+    {label:'Without SA', data:MON_W2.map((_,i)=>MSFT_SA.won_nsa_25['2025-'+String(i+1).padStart(2,'0')]||0), backgroundColor:'#059669'},
+  ]);
+  bar('won-sa-2026', MON_W2, [
+    {label:'With SA',    data:MON_W2.map((_,i)=>MSFT_SA.won_sa_26['2026-'+String(i+1).padStart(2,'0')]||0),  backgroundColor:'#F59E0B'},
+    {label:'Without SA', data:MON_W2.map((_,i)=>MSFT_SA.won_nsa_26['2026-'+String(i+1).padStart(2,'0')]||0), backgroundColor:'#059669'},
+  ]);
 }
 
 function togWon(mode){
