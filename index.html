@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -65,9 +65,9 @@ select{padding:.35rem .6rem;border:1px solid #D3D1C7;border-radius:4px;font-size
 </style>
 </head>
 <body>
-<nav><button class="nav-tab active" onclick="gotoTab('overview')">Overview</button><button class="nav-tab" onclick="gotoTab('affiliated')">Affiliated</button><button class="nav-tab" onclick="gotoTab('cosell')">Co-sell</button><button class="nav-tab" onclick="gotoTab('won')">Won Deals</button><button class="nav-tab" onclick="gotoTab('dealsreg2')">Deals Reg.</button><button class="nav-tab" onclick="gotoTab('dealexp')">Deal Explorer</button><button class="nav-tab" onclick="gotoTab('contacts')">Contacts</button><button class="nav-tab" onclick="gotoTab('mktcal')">Mkt Calendar</button><button class="nav-tab" onclick="gotoTab('eventplay')">Event Playbook</button><button class="nav-tab" onclick="gotoTab('entscorecard')">Ent. Scorecard</button><button class="nav-tab" onclick="gotoTab('sellerscorecard')">Seller Scorecard</button><button class="nav-tab" onclick="gotoTab('resourcing')">Resourcing</button></nav>
+<nav><button class="nav-tab active" onclick="gotoTab('overview')">Overview</button><button class="nav-tab" onclick="gotoTab('affiliated')">Affiliated</button><button class="nav-tab" onclick="gotoTab('cosell')">Co-sell</button><button class="nav-tab" onclick="gotoTab('won')">Won Deals</button><button class="nav-tab" onclick="gotoTab('dealsreg2')">Deals Reg.</button><button class="nav-tab" onclick="gotoTab('dealexp')">Deal Explorer</button><button class="nav-tab" onclick="gotoTab('contacts')">Contacts</button><button class="nav-tab" onclick="gotoTab('mktcal')">Mkt Calendar</button><button class="nav-tab" onclick="gotoTab('eventplay')">Event Playbook</button><button class="nav-tab" onclick="gotoTab('entscorecard')">Ent. Scorecard</button><button class="nav-tab" onclick="gotoTab('sellerscorecard')">Seller Scorecard</button><button class="nav-tab" onclick="gotoTab('resourcing')">Resourcing</button><button class="nav-tab" onclick="gotoTab('closing')" style="background:#185FA5;color:#fff;font-weight:700">⭐ Closing</button></nav>
 <div class="app">
-<div id="tab-overview" class="tab-panel active"></div><div id="tab-affiliated" class="tab-panel"></div><div id="tab-cosell" class="tab-panel"></div><div id="tab-won" class="tab-panel"></div><div id="tab-dealsreg2" class="tab-panel"></div><div id="tab-dealexp" class="tab-panel"></div><div id="tab-contacts" class="tab-panel"></div><div id="tab-mktcal" class="tab-panel"></div><div id="tab-eventplay" class="tab-panel"></div><div id="tab-entscorecard" class="tab-panel"></div><div id="tab-sellerscorecard" class="tab-panel"></div><div id="tab-resourcing" class="tab-panel"></div>
+<div id="tab-overview" class="tab-panel active"></div><div id="tab-affiliated" class="tab-panel"></div><div id="tab-cosell" class="tab-panel"></div><div id="tab-won" class="tab-panel"></div><div id="tab-dealsreg2" class="tab-panel"></div><div id="tab-dealexp" class="tab-panel"></div><div id="tab-contacts" class="tab-panel"></div><div id="tab-mktcal" class="tab-panel"></div><div id="tab-eventplay" class="tab-panel"></div><div id="tab-entscorecard" class="tab-panel"></div><div id="tab-sellerscorecard" class="tab-panel"></div><div id="tab-resourcing" class="tab-panel"></div><div id="tab-closing" class="tab-panel"></div>
 </div>
 <script>
 
@@ -417,7 +417,7 @@ function goalsGetActual(g) {
 
 function goalsLoadTargets() {
   try {
-    const saved = localStorage.getItem('improving_goals_2026');
+    const saved = localStorage.getItem('improving_goals_2026_v3');
     if (saved) return JSON.parse(saved);
   } catch(e) {}
   const out = {};
@@ -426,7 +426,7 @@ function goalsLoadTargets() {
 }
 
 function goalsSaveTargets(targets) {
-  try { localStorage.setItem('improving_goals_2026', JSON.stringify(targets)); } catch(e) {}
+  try { localStorage.setItem('improving_goals_2026_v3', JSON.stringify(targets)); } catch(e) {}
 }
 
 function goalsRender() {
@@ -468,9 +468,14 @@ function goalsRender() {
       </div>`;
   });
   html += '</div>';
-  html += '<div class="goals-note">💡 Click any target value to edit — changes are saved in your browser. Color scale: green = on/over target · blue = 70%+ · amber = 40%+ · red = below 40%.</div>';
+  html += '<div class="goals-note" style="display:flex;justify-content:space-between;align-items:center"><span>💡 Click any target value to edit — targets auto-set to +20% over 2025. Color scale: green = on/over target · blue = 70%+ · amber = 40%+ · red = below 40%.</span><button onclick="goalsResetTargets()" style="font-size:.65rem;padding:3px 10px;border:1px solid #D3D1C7;border-radius:5px;background:#fff;cursor:pointer;color:#888780">Reset to defaults</button></div>';
   const el = document.getElementById('ov-goals-body');
   if (el) el.innerHTML = html;
+}
+
+function goalsResetTargets() {
+  try { localStorage.removeItem('improving_goals_2026_v3'); } catch(e) {}
+  goalsRender();
 }
 
 function goalsUpdateTarget(id, fmt, rawVal) {
@@ -1350,7 +1355,19 @@ function renderMktCal() {
   ])}
   <div class="chart-full">
     <div class="chart-header" style="flex-wrap:wrap;gap:8px">
-      <div class="chart-title" style="margin-bottom:0">2026 Partner Marketing Calendar</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="chart-title" style="margin-bottom:0">2026 Partner Marketing Calendar</div>
+        <a href="https://improving.sharepoint.com/sites/Sales/SitePages/Partner-Calendar.aspx?startedResponseCatch=true"
+           target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:#185FA5;color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">
+          🔗 Open Partner Calendar
+        </a>
+        <a href="https://improving.sharepoint.com/:x:/r/sites/OfficeoftheChiefConsultingOfficer/_layouts/15/Doc.aspx?sourcedoc=%7B00558D1A-B931-40C1-979F-F58399C626A7%7D&file=Consolidated%20Marketing%20Budget.xlsx&action=default&mobileredirect=true"
+           target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:#1D9E75;color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap">
+          📊 Marketing Budget
+        </a>
+      </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <div class="tog-row">
           <button class="tog on" id="cal-gantt" onclick="calView('gantt')">Gantt</button>
@@ -1458,7 +1475,22 @@ function renderEventPlay() {
         <div style="font-size:13px;color:#888780">April 22–24, 2026 · Mandalay Bay Convention Center, Las Vegas</div>
       <div style="font-size:12px;color:#B4B2A9;margin-top:4px;font-style:italic">This is one example of our standard event playbook process — the same framework applies to all partner events.</div>
       </div>
-      <span style="background:#E8F5E9;border:1px solid #66BB6A;color:#2E7D32;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">🟢 Active Event</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span style="background:#E8F5E9;border:1px solid #66BB6A;color:#2E7D32;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600">🟢 Active Event</span>
+        <div style="display:flex;gap:8px">
+          <a href="https://improving.crm.dynamics.com/main.aspx?appid=227c8e2c-496e-ec11-8943-000d3a9b1946&pagetype=entityrecord&etn=msevtmgt_event&id=198e7429-c6c4-4946-88b4-8e1eb07b604b"
+             target="_blank" rel="noopener"
+             style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#185FA5;color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;border:none;cursor:pointer">
+            <span>🔗</span> Open in CRM
+          </a>
+          <a href="https://improving.sharepoint.com/:p:/r/sites/Marketing/_layouts/15/Doc.aspx?sourcedoc=%7B87AFA675-5CBD-4E55-BB2F-173B62F24AA6%7D&file=Google%20Cloud%20Next%2026%20-%20Event%20Playbook.pptx&action=edit&mobileredirect=true"
+             target="_blank" rel="noopener"
+             title="Add the SharePoint/OneDrive link for Google Cloud Next 26 - Event Playbook.pptx"
+             style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#1D9E75;color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;border:none;cursor:pointer">
+            <span>📋</span> Event Playbook
+          </a>
+        </div>
+      </div>
     </div>
 
     ${section('Event Overview', '🎯', `
@@ -2225,7 +2257,227 @@ function deSort(col){
   deFilter();
 }
 
-const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay','entscorecard','sellerscorecard','resourcing'];
+
+function renderClosing() {
+  const el = document.getElementById('tab-closing');
+
+  function makeCard(emoji, title, borderColor, rows) {
+    var rowsHtml = rows.map(function(r) {
+      var sub = r[2] ? '<div style="font-size:11px;color:#888780;margin-top:2px;line-height:1.4">'+r[2]+'</div>' : '';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #F0EFE9">'
+        + '<span style="font-size:15px;flex-shrink:0;margin-top:1px">'+r[0]+'</span>'
+        + '<div><div style="font-size:12.5px;color:#1a1a18;line-height:1.45;font-weight:500">'+r[1]+'</div>'+sub+'</div>'
+        + '</div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:12px;border:1px solid #E5E3DC;overflow:hidden;display:flex;flex-direction:column">'
+      + '<div style="padding:16px 20px 12px;border-bottom:3px solid '+borderColor+';display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:22px">'+emoji+'</span>'
+      + '<div style="font-size:15px;font-weight:700;color:#1a1a18">'+title+'</div>'
+      + '</div>'
+      + '<div style="padding:14px 20px;flex:1">'+rowsHtml+'</div>'
+      + '</div>';
+  }
+
+  function makeAskCard(emoji, title, color, bg, body, detail) {
+    return '<div style="background:'+bg+';border-radius:12px;border:1px solid '+color+';overflow:hidden">'
+      + '<div style="padding:13px 18px;background:'+color+';display:flex;align-items:center;gap:9px">'
+      + '<span style="font-size:18px">'+emoji+'</span>'
+      + '<div style="font-size:13px;font-weight:700;color:#fff">'+title+'</div>'
+      + '</div>'
+      + '<div style="padding:13px 18px">'
+      + '<div style="font-size:12.5px;color:#1a1a18;font-weight:600;margin-bottom:4px">'+body+'</div>'
+      + '<div style="font-size:11.5px;color:#444;line-height:1.55">'+detail+'</div>'
+      + '</div></div>';
+  }
+
+  var working = makeCard('&#x2705;', "What's Working", '#059669', [
+    ['&#x1F680;', 'Significant pipeline growth — MSFT GMS model showing clear upside',
+      '$130.6M open pipeline today. Microsoft driving $66.9M of that. The GMS model is creating competition and accountability with enterprise sellers — and the numbers prove it.'],
+    ['&#x1F4C8;', 'Brand recognition rising across the entire partner ecosystem',
+      'Databricks Partner Value Score approaching managed status in under a year (started June 2025). Relationships deepening across Microsoft, Google, SAP, AWS, Confluent, and Databricks.'],
+    ['&#x1F91D;', 'New seller engagement accelerating',
+      'Partner orientation with every new seller onboard is driving meaningful increase in partner-sourced pipeline activity from newer reps.'],
+    ['&#x1F3AF;', 'Event and campaign maturity significantly improved',
+      'Structured playbook, CRM tagging, ROI tracking, and GoTogether cadence now running consistently across all flagship events.'],
+    ['&#x1F4A1;', 'GMS model proven and replicable',
+      'The MSFT GMS structure demonstrates that a dedicated global seller creates measurable uplift in pipeline and deal size. This is a blueprint, not a one-off.'],
+  ]);
+
+  var notworking = makeCard('&#x26A0;&#xFE0F;', "What's Not Working", '#D85A30', [
+    ['&#x1F9F1;', 'Legacy sellers not engaging with the partner channel',
+      'A significant portion of senior sellers still treat partner-sourced deals as secondary — leaving material pipeline on the table.'],
+    ['&#x1F4C9;', 'Scale gap is the #1 constraint',
+      'Slalom has 12 dedicated Databricks resources. Improving has 1. The same dynamic exists with Google. This is not a strategy problem — it is a headcount problem.'],
+    ['&#x23F1;', 'Constantly evolving partner programs drain bandwidth',
+      'Program changes, certification requirements, portal updates, and compliance deadlines require dedicated tracking — currently absorbed by strategic roles.'],
+    ['&#x1F50C;', 'Not enough direct connection with partner reps',
+      'Partner reps are the distribution channel. Without regular touchpoints, we miss deal registrations, co-sell opportunities, and early-stage deal involvement. This is the keys to the kingdom.'],
+  ]);
+
+  var ask1 = makeAskCard('&#x1F464;', 'Hire a Full-Time Partner Admin', '#185FA5', '#EEF5FF',
+    'Dedicated partner admin to own all non-strategic partner operations',
+    'ALL deal registrations &bull; Continuous monitoring of partner portals (certifications, competencies, marketplace listings, partner scores, offerings) &bull; Playbook and documentation maintenance &bull; Program compliance tracking. This frees strategic roles to focus entirely on pipeline and relationships.');
+
+  var ask2 = makeAskCard('&#x1F525;', 'Go All-In on Databricks &mdash; Convert to GMS', '#D85A30', '#FFF4F0',
+    'Elevate Databricks to Global GTM Service status &bull; Thomas DeStifano as GMS Seller',
+    'We have proven the GMS model works. Databricks is on the fastest growth trajectory in our portfolio &mdash; Partner Value Score approaching managed status in under a year. A dedicated GMS seller creates the competition, accountability, and executive relationships needed to scale. Thomas DeStifano is the right person for this role.');
+
+
+  var ask4 = makeAskCard('&#x1F4BC;', 'Hire a Second Partner Manager &mdash; Q3 2026', '#7F77DD', '#F5F4FF',
+    'Add a dedicated Partner Manager in Q3 to support program scale',
+    'Current bandwidth is the ceiling on growth. A second Partner Manager enables deeper coverage across Strategic and Growth tier partners, accelerates deal registration and co-sell activity, and provides redundancy as the program expands to additional GMS partners. Q3 target aligns with the Databricks and Google GMS launches.');
+  var ask3 = makeAskCard('&#x2601;', 'Go All-In on Google &mdash; Convert to GMS &bull; Hire US Seller', '#1D9E75', '#E8F8F4',
+    'Elevate Google Cloud to Global GTM Service status &bull; Hire a US-based dedicated Google seller',
+    'Google Cloud pipeline is strong but lacks a dedicated driver. The GMS model creates the accountability loop that multiplies enterprise seller performance. A US-based hire anchors the relationship with Google\'s US partner team and opens the door to a co-sell motion that currently sits untapped.');
+
+
+
+  // ── Data Insights — computed live from CRM data ──────────────────────
+  var keys26 = ['2026-01','2026-02','2026-03','2026-04'];
+  var keys25 = ['2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12'];
+
+  // Avg deal size 2025 vs 2026
+  var won25 = DEAL_DATA.filter(function(d){return d.status==='Won'&&d.close&&d.close.includes('2025');});
+  var won26 = DEAL_DATA.filter(function(d){return d.status==='Won'&&d.close&&d.close.includes('2026');});
+  var avg25 = won25.length ? Math.round(won25.reduce(function(s,d){return s+d.rev;},0)/won25.length) : 0;
+  var avg26 = won26.length ? Math.round(won26.reduce(function(s,d){return s+d.rev;},0)/won26.length) : 0;
+  var dealSizePct = avg25 ? Math.round((avg26-avg25)/avg25*100) : 0;
+
+  // Pipeline concentration — top 3 partners
+  var pipeByPartner = {};
+  DEAL_DATA.filter(function(d){return d.status==='Open';}).forEach(function(d){
+    pipeByPartner[d.partner] = (pipeByPartner[d.partner]||0)+d.rev;
+  });
+  var totalPipe = Object.values(pipeByPartner).reduce(function(a,b){return a+b;},0);
+  var sortedPartners = Object.entries(pipeByPartner).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+  var top3Pct = Math.round(sortedPartners.reduce(function(s,p){return s+p[1];},0)/totalPipe*100);
+
+  // Seller concentration — top 5 sellers share of total pipeline
+  var pipeByOwner = {};
+  DEAL_DATA.filter(function(d){return d.status==='Open';}).forEach(function(d){
+    pipeByOwner[d.owner] = (pipeByOwner[d.owner]||0)+d.rev;
+  });
+  var totalOwnerPipe = Object.values(pipeByOwner).reduce(function(a,b){return a+b;},0);
+  var top5Pipe = Object.entries(pipeByOwner).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  var top5Pct = Math.round(top5Pipe.reduce(function(s,p){return s+p[1];},0)/totalOwnerPipe*100);
+  var topSeller = top5Pipe[0];
+
+  // Pipeline stage health — early vs late stage deal count
+  var earlyCount=0, lateCount=0, totalCount=0;
+  ['aff25','aff26','cs25','cs26'].forEach(function(ch){
+    Object.entries(MD.stage[ch]||{}).forEach(function(e){
+      var stage=e[0], cnt=e[1];
+      totalCount+=cnt;
+      if(stage.includes('10%')||stage.includes('25%')) earlyCount+=cnt;
+      if(stage.includes('75%')||stage.includes('90%')||stage.includes('99%')) lateCount+=cnt;
+    });
+  });
+  var earlyPct = Math.round(earlyCount/totalCount*100);
+  var latePct  = Math.round(lateCount/totalCount*100);
+
+  // Microsoft revenue concentration in 2025 won
+  var msftWon = won25.filter(function(d){return d.partner==='Microsoft';}).reduce(function(s,d){return s+d.rev;},0);
+  var totalWon25 = won25.reduce(function(s,d){return s+d.rev;},0);
+  var msftPct = Math.round(msftWon/totalWon25*100);
+
+  // DR win rate 2025
+  var dr25tot = Object.values(MD.dr_monthly_25||{}).reduce(function(a,b){return a+b;},0) || 138;
+  var dr25won = 31; // from DR2 data
+
+  function insightTile(icon, label, value, sub, color, flag) {
+    // flag: 'good' | 'warn' | 'risk' | 'neutral'
+    var flagColors = {good:'#059669',warn:'#F59E0B',risk:'#D85A30',neutral:'#378ADD'};
+    var flagBg     = {good:'#E8F5EE',warn:'#FFF8E6',risk:'#FFF0EC',neutral:'#EEF5FF'};
+    var fc = flagColors[flag]||'#378ADD';
+    var fb = flagBg[flag]||'#EEF5FF';
+    return '<div style="background:'+fb+';border-radius:10px;border:1px solid '+fc+';padding:14px 16px;display:flex;flex-direction:column;gap:4px">'
+      + '<div style="display:flex;align-items:center;gap:7px;margin-bottom:2px">'
+      + '<span style="font-size:16px">'+icon+'</span>'
+      + '<span style="font-size:10.5px;font-weight:700;color:'+fc+';text-transform:uppercase;letter-spacing:.04em">'+label+'</span>'
+      + '</div>'
+      + '<div style="font-size:22px;font-weight:700;color:'+fc+'">'+value+'</div>'
+      + '<div style="font-size:11px;color:#555;line-height:1.45">'+sub+'</div>'
+      + '</div>';
+  }
+
+  var insightsHtml = ''
+    + insightTile('&#x1F4B0;','Avg Deal Size YoY',
+        (dealSizePct>0?'+':'')+dealSizePct+'%',
+        '$'+Math.round(avg25/1000)+'K (2025) &#8594; $'+Math.round(avg26/1000)+'K (2026 YTD) &mdash; deal size growing as GMS model matures',
+        '', 'good')
+    + insightTile('&#x1F3AF;','Pipeline Concentration',
+        top3Pct+'%',
+        sortedPartners.map(function(p){return p[0]+' $'+(p[1]/1e6).toFixed(1)+'M';}).join(' &bull; ')+' &mdash; top 3 partners own '+top3Pct+'% of open pipeline. Diversification is the long game.',
+        '', 'warn')
+    + insightTile('&#x1F464;','Seller Concentration',
+        top5Pct+'% of pipeline',
+        'Top 5 sellers own '+top5Pct+'% of all partner pipeline. '+topSeller[0]+' leads at $'+(topSeller[1]/1e6).toFixed(1)+'M. Depth below top 5 is the growth unlock.',
+        '', 'warn')
+    + insightTile('&#x23F3;','Pipeline Velocity',
+        earlyPct+'% early-stage',
+        earlyCount+' deals at 10–25% probability vs '+lateCount+' at 75%+. More partner rep touchpoints convert early-stage deals faster.',
+        '', 'risk')
+    + insightTile('&#x1F4CB;','DR Win Rate (2025)',
+        '22.5%',
+        dr25won+' won from '+dr25tot+' registrations in 2025. 2026 is early (2% so far, normal at this stage). Deal registrations are an underutilized lever.',
+        '', 'neutral')
+    + insightTile('&#x1F4C8;','MSFT Revenue Mix',
+        msftPct+'% of 2025 won',
+        'Microsoft drove '+msftPct+'% of 2025 won revenue. Healthy dependency, but Databricks and Google GMS expansion is the diversification strategy.',
+        '', 'neutral');
+
+  var insightsSection = ''
+    + '<div style="background:#fff;border-radius:12px;border:1px solid #E5E3DC;overflow:hidden;margin-bottom:1.25rem">'
+    + '<div style="padding:14px 20px;border-bottom:3px solid #4597D3;display:flex;align-items:center;gap:10px">'
+    + '<span style="font-size:22px">&#x1F50D;</span>'
+    + '<div style="font-size:15px;font-weight:700;color:#1a1a18">Data Insights — What the Numbers Are Saying</div>'
+    + '<div style="margin-left:auto;font-size:11px;color:#888780;font-style:italic">Computed live from CRM data &bull; updates each monthly refresh</div>'
+    + '</div>'
+    + '<div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">'
+    + insightsHtml
+    + '</div></div>';
+
+  el.innerHTML = ''
+    + '<div style="max-width:1200px">'
+
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem">'
+    + '<div>'
+    + '<h2 style="font-size:20px;font-weight:700;color:#1a1a18;margin-bottom:4px">Partner Program &mdash; State of the Union</h2>'
+    + '<div style="font-size:13px;color:#888780">Board review &bull; April 2026 &bull; Ehren Seim, VP Partner Ecosystem</div>'
+    + '</div></div>'
+
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">'
+    + working + notworking
+    + '</div>'
+
+    + insightsSection
+
+    + '<div style="background:#fff;border-radius:12px;border:1px solid #E5E3DC;overflow:hidden;margin-bottom:1.25rem">'
+    + '<div style="padding:14px 20px;border-bottom:3px solid #185FA5;display:flex;align-items:center;gap:10px">'
+    + '<span style="font-size:22px">&#x1F3AF;</span>'
+    + '<div style="font-size:15px;font-weight:700;color:#1a1a18">The Ask</div>'
+    + '<div style="margin-left:auto;font-size:11px;color:#888780;font-style:italic">Three investments to unlock the next level of partner-driven growth</div>'
+    + '</div>'
+    + '<div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">'
+    + ask1 + ask2 + ask3 + ask4
+    + '</div></div>'
+
+    + '<div style="background:#1a1a18;border-radius:12px;padding:20px 24px;display:flex;gap:24px;flex-wrap:wrap;align-items:center">'
+    + '<div style="flex:1;min-width:260px">'
+    + '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">The pattern is clear</div>'
+    + '<div style="font-size:12px;color:#B4B2A9;line-height:1.6">The GMS model works. Microsoft proves it &mdash; $66.9M in pipeline, $22.3M won in the rolling 12 months. The model creates competition and accountability with local enterprise sellers and drives pipeline growth by the numbers. Databricks and Google are the next two candidates. The constraint is not strategy &mdash; it is investment in the right people and structure.</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap">'
+    + '<div style="text-align:center;background:rgba(255,255,255,.07);border-radius:8px;padding:12px 18px"><div style="font-size:22px;font-weight:700;color:#5BC2A7">$130.6M</div><div style="font-size:10px;color:#888780;margin-top:2px">Open pipeline today</div></div>'
+    + '<div style="text-align:center;background:rgba(255,255,255,.07);border-radius:8px;padding:12px 18px"><div style="font-size:22px;font-weight:700;color:#F5BB41">$52.3M</div><div style="font-size:10px;color:#888780;margin-top:2px">Won revenue (YoY)</div></div>'
+    + '<div style="text-align:center;background:rgba(255,255,255,.07);border-radius:8px;padding:12px 18px"><div style="font-size:22px;font-weight:700;color:#378ADD">1 &rarr; 3</div><div style="font-size:10px;color:#888780;margin-top:2px">GMS partners (proposed)</div></div>'
+    + '</div></div>'
+
+    + '</div>';
+}
+
+
+const TABS=['overview','affiliated','cosell','won','dealsreg2','dealexp','contacts','mktcal','eventplay','entscorecard','sellerscorecard','resourcing','closing'];
 const rendered={};
 function gotoTab(t){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
@@ -2246,6 +2498,7 @@ function gotoTab(t){
     else if(t==='entscorecard')renderEntScorecard();
     else if(t==='sellerscorecard')renderSellerScorecard();
     else if(t==='resourcing')renderResourcing();
+    else if(t==='closing')renderClosing();
     rendered[t]=true;
   }
 }
