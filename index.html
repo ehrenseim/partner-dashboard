@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2263,10 +2263,14 @@ function renderClosing() {
 
   function makeCard(emoji, title, borderColor, rows) {
     var rowsHtml = rows.map(function(r) {
-      var sub = r[2] ? '<div style="font-size:11px;color:#888780;margin-top:2px;line-height:1.4">'+r[2]+'</div>' : '';
-      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #F0EFE9">'
+      var sub = r[2] ? '<div style="font-size:11px;color:#555;margin-top:2px;line-height:1.4">'+r[2]+'</div>' : '';
+      var fix = r[3] ? '<div style="display:flex;gap:5px;align-items:flex-start;margin-top:6px;padding:5px 8px;background:#E8F5EE;border-radius:5px;border-left:3px solid #059669">'
+        + '<span style="font-size:11px;flex-shrink:0;margin-top:0px">&#x1F527;</span>'
+        + '<div style="font-size:11px;color:#1a5c38;line-height:1.4;font-weight:500">'+r[3]+'</div>'
+        + '</div>' : '';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #F0EFE9">'
         + '<span style="font-size:15px;flex-shrink:0;margin-top:1px">'+r[0]+'</span>'
-        + '<div><div style="font-size:12.5px;color:#1a1a18;line-height:1.45;font-weight:500">'+r[1]+'</div>'+sub+'</div>'
+        + '<div style="flex:1"><div style="font-size:12.5px;color:#1a1a18;line-height:1.45;font-weight:600">'+r[1]+'</div>'+sub+fix+'</div>'
         + '</div>';
     }).join('');
     return '<div style="background:#fff;border-radius:12px;border:1px solid #E5E3DC;overflow:hidden;display:flex;flex-direction:column">'
@@ -2303,15 +2307,19 @@ function renderClosing() {
       'The MSFT GMS structure demonstrates that a dedicated global seller creates measurable uplift in pipeline and deal size. This is a blueprint, not a one-off.'],
   ]);
 
-  var notworking = makeCard('&#x26A0;&#xFE0F;', "What's Not Working", '#D85A30', [
+  var notworking = makeCard('&#x26A0;&#xFE0F;', "What's Not Working &mdash; &amp; What We're Doing About It", '#D85A30', [
     ['&#x1F9F1;', 'Legacy sellers not engaging with the partner channel',
-      'A significant portion of senior sellers still treat partner-sourced deals as secondary — leaving material pipeline on the table.'],
+      'A significant portion of senior sellers still treat partner-sourced deals as secondary — leaving material pipeline on the table. 58% of partner pipeline is owned by just 5 sellers.',
+      'Mandatory partner orientation for every new seller. Introducing seller-level partner scorecards to create visibility and accountability. The GMS model expansion to Databricks and Google will create competitive pressure on local enterprise sellers and force engagement.'],
     ['&#x1F4C9;', 'Scale gap is the #1 constraint',
-      'Slalom has 12 dedicated Databricks resources. Improving has 1. The same dynamic exists with Google. This is not a strategy problem — it is a headcount problem.'],
+      'Slalom has 12 dedicated Databricks resources. Improving has 1. The same gap exists with Google. This is not a strategy problem — it is a headcount problem.',
+      'Four targeted hires: (1) Full-time Partner Admin to absorb all operational work, (2) Databricks GMS Seller — Thomas DeStifano, (3) US-based Google GMS Seller, (4) Second Partner Manager in Q3. Each hire unlocks a specific scale bottleneck.'],
     ['&#x23F1;', 'Constantly evolving partner programs drain bandwidth',
-      'Program changes, certification requirements, portal updates, and compliance deadlines require dedicated tracking — currently absorbed by strategic roles.'],
+      'Program changes, certification requirements, portal updates, and compliance deadlines require dedicated tracking — currently absorbed by strategic roles that should be focused on pipeline.',
+      'The Partner Admin hire directly solves this. Full ownership of all portal monitoring, certification tracking, competency maintenance, and compliance deadlines — freeing strategic roles to focus on revenue.'],
     ['&#x1F50C;', 'Not enough direct connection with partner reps',
-      'Partner reps are the distribution channel. Without regular touchpoints, we miss deal registrations, co-sell opportunities, and early-stage deal involvement. This is the keys to the kingdom.'],
+      'Partner reps are the distribution channel. Without regular touchpoints, we miss deal registrations, co-sell opportunities, and early-stage deal involvement. This is the keys to the kingdom.',
+      'Formalizing a quarterly partner QBR cadence with all Tier 1 partner reps. GoTogether monthly sessions are building the rhythm. The Partner Admin will own weekly portal check-ins and flag co-sell opportunities in real time.'],
   ]);
 
   var ask1 = makeAskCard('&#x1F464;', 'Hire a Full-Time Partner Admin', '#185FA5', '#EEF5FF',
