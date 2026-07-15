@@ -394,6 +394,7 @@ const MD={"open_raw":84056687,"open_wtd":26238667,"yoy_pipe_total":84056687,"yoy
 const LOST_DATA = {"total_lost_rev":124568614.0,"total_lost_count":775,"by_partner_rev":{"Microsoft":54461116.0,"Amazon AWS":34123213.0,"Google Cloud":15653372.0,"SAP":10914712.0,"Confluent":5398960.0,"Databricks":3027240.0,"Snowflake":790001.0,"Other":200000.0},"by_partner_count":{"Microsoft":429,"Amazon AWS":134,"SAP":75,"Google Cloud":71,"Confluent":43,"Databricks":14,"Snowflake":8,"Other":1}};
 const LOST_MONTHLY = {"rev":{"2025-01":6454159.0,"2025-02":6154332.0,"2025-03":7043365.0,"2025-04":9515737.0,"2025-05":8345565.0,"2025-06":4411583.0,"2025-07":4991158.0,"2025-08":8936876.0,"2025-09":7842885.0,"2025-10":8589724.0,"2025-11":1863969.0,"2025-12":4574582.0,"2026-01":8652417.0,"2026-02":4598372.0,"2026-03":10077721.0,"2026-04":4681475.0,"2026-05":5468011.0,"2026-06":7693759.0,"2026-07":4672924.0},"count":{"2025-01":38,"2025-02":29,"2025-03":57,"2025-04":37,"2025-05":58,"2025-06":39,"2025-07":34,"2025-08":48,"2025-09":41,"2025-10":47,"2025-11":24,"2025-12":43,"2026-01":57,"2026-02":38,"2026-03":34,"2026-04":38,"2026-05":39,"2026-06":56,"2026-07":18}};
 const PEN = {"partner":{"open":84056687,"won":68125916,"lost":124568614.0,"total":276751217.0},"company":{"open":242259894.0,"won":376082500.0,"lost":291709463.0,"total":910051857.0}};
+const CLOSE_RATE_CMP = {"matched_count":261,"match_rate_pct":58.1,"registered":{"won":103,"lost":158,"winRate":39.5,"wonRev":19802312.0,"lostRev":31456567.0},"nonRegistered":{"won":365,"lost":617,"winRate":37.2,"wonRev":48323604.0,"lostRev":93112047.0}};
 const WIN_PM = {"data":{"Amazon AWS":{"2025-01":44.4,"2025-02":81.3,"2025-03":67.2,"2025-04":16.6,"2025-05":40.7,"2025-06":63.3,"2025-07":68.3,"2025-08":8.5,"2025-09":47.4,"2025-10":31.7,"2025-11":39.9,"2025-12":1.2,"2026-01":9.9,"2026-02":27.4,"2026-03":23.1,"2026-04":71.0,"2026-05":75.1,"2026-06":91.8,"2026-07":0.0},"Cognition":{"2026-04":100.0},"Confluent":{"2025-01":75.9,"2025-02":0.0,"2025-03":0.0,"2025-04":100.0,"2025-05":10.7,"2025-06":1.7,"2025-07":19.4,"2025-08":8.6,"2025-09":73.9,"2025-10":11.0,"2025-12":0.0,"2026-01":0.0,"2026-02":0.0,"2026-04":57.1,"2026-05":0.0},"Databricks":{"2025-04":100.0,"2025-07":0.0,"2025-09":100.0,"2025-12":0.0,"2026-01":11.6,"2026-03":0.0,"2026-04":66.0,"2026-05":20.6,"2026-06":100.0,"2026-07":0.0},"Google Cloud":{"2025-01":27.5,"2025-02":34.4,"2025-03":15.2,"2025-04":14.0,"2025-05":36.5,"2025-06":9.9,"2025-07":88.6,"2025-08":4.9,"2025-09":5.2,"2025-10":25.8,"2025-11":17.2,"2025-12":100.0,"2026-01":19.6,"2026-02":17.2,"2026-03":80.2,"2026-04":0.0,"2026-05":4.9,"2026-06":15.2,"2026-07":19.4},"Microsoft":{"2025-01":26.7,"2025-02":17.2,"2025-03":27.7,"2025-04":12.8,"2025-05":63.1,"2025-06":42.3,"2025-07":44.1,"2025-08":10.8,"2025-09":22.2,"2025-10":21.3,"2025-11":69.0,"2025-12":54.5,"2026-01":66.7,"2026-02":42.4,"2026-03":26.0,"2026-04":31.6,"2026-05":55.3,"2026-06":22.8,"2026-07":2.3},"SAP":{"2025-01":0.0,"2025-02":0.0,"2025-03":23.2,"2025-04":15.9,"2025-05":37.3,"2025-06":25.1,"2025-07":0.0,"2025-08":16.2,"2025-09":25.9,"2025-10":37.0,"2025-11":0.0,"2025-12":100.0,"2026-01":6.8,"2026-02":53.3,"2026-03":39.4,"2026-04":49.3,"2026-05":39.7,"2026-06":87.0,"2026-07":0.0},"Snowflake":{"2025-02":100.0,"2025-03":0.0,"2025-04":23.1,"2025-05":0.0,"2025-06":0.0,"2025-09":0.0,"2025-11":100.0,"2025-12":0.0,"2026-01":0.0,"2026-02":100.0,"2026-04":100.0}},"months":["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"]};
 // ── WON TAB ───────────────────────────────────────────────────────────────────
 
@@ -1058,6 +1059,25 @@ function renderDR2Tab() {
         <tbody id="dr3-tbody"></tbody>
       </table>
     </div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-title">Does registration actually improve win rate?</div>
+    <div class="note" style="background:#FFF8E6;border:1px solid #EFD89A;border-radius:8px;padding:10px 14px;color:#5A4010;margin-bottom:12px">
+      ⚠️ <strong>Methodology caveat:</strong> the registration export only has an opportunity name, not the same ID used in the Won/Lost pipeline exports, so this is a best-effort match by opportunity name — only ${CLOSE_RATE_CMP.match_rate_pct}% of registered opportunities (${CLOSE_RATE_CMP.matched_count} of them) could be matched to a closed (won or lost) deal. Treat this as directional, not precise.
+    </div>
+    <div class="charts-grid" style="margin-bottom:0">
+      <div style="text-align:center;padding:16px;background:#F9F8F5;border-radius:8px">
+        <div style="font-size:11px;color:#888780;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Registered deals</div>
+        <div style="font-size:32px;font-weight:700;color:#0F6E56">${CLOSE_RATE_CMP.registered.winRate}%</div>
+        <div style="font-size:12px;color:#888780;margin-top:4px">${CLOSE_RATE_CMP.registered.won} won / ${CLOSE_RATE_CMP.registered.lost} lost</div>
+      </div>
+      <div style="text-align:center;padding:16px;background:#F9F8F5;border-radius:8px">
+        <div style="font-size:11px;color:#888780;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Non-registered deals</div>
+        <div style="font-size:32px;font-weight:700;color:#888780">${CLOSE_RATE_CMP.nonRegistered.winRate}%</div>
+        <div style="font-size:12px;color:#888780;margin-top:4px">${CLOSE_RATE_CMP.nonRegistered.won} won / ${CLOSE_RATE_CMP.nonRegistered.lost} lost</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:10px">Registered deals win about ${(CLOSE_RATE_CMP.registered.winRate-CLOSE_RATE_CMP.nonRegistered.winRate).toFixed(1)} percentage points more often than non-registered ones — a real but modest lift, not the dramatic difference you might expect from a mature co-sell motion.</div>
   </div>`;
 
   // Monthly trend chart
