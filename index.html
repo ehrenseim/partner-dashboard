@@ -104,7 +104,8 @@ const MiniChart = {
 
     const isHoriz = opts.horizontal || false;
     const isCount = opts.yFmt === 'count';
-    const fmt = isCount ? v => v : this._fmt;
+    const isPct = opts.yFmt === 'pct';
+    const fmt = isCount ? v => v : isPct ? v => Math.round(v)+'%' : this._fmt;
 
     // For stacked charts, max is the sum of all series per group; otherwise max single value
     const isStackedForMax = opts.stacked || false;
@@ -390,6 +391,9 @@ const DR_REG = {"total":456,"byPartner":{"Microsoft":273,"Amazon AWS":50,"Google
 const DR_BY_PARTNER_YEAR = {"Microsoft":{"2025":66,"2026":174},"Amazon AWS":{"2025":15,"2026":3},"Google Cloud":{"2025":21,"2026":16},"Snowflake":{"2025":15,"2026":4},"Databricks":{"2025":5,"2026":11},"Temporal":{"2025":0,"2026":1},"Cognition":{"2025":0,"2026":2},"Confluent":{"2025":26,"2026":6},"Scrum.org":{"2025":1,"2026":0}};
 
 const MD={"open_raw":84056687,"open_wtd":26238667,"yoy_pipe_total":84056687,"yoy_won_total":68125916,"yoy_won_deals":468,"pipe_created_rev":{"aff25":{"2025-01":790000.0,"2025-02":737535.0,"2025-03":1349713.0,"2025-04":75000.0,"2025-05":9303127.0,"2025-06":1359158.0,"2025-07":1208000.0,"2025-08":720274.0,"2025-09":2392920.0,"2025-10":2146878.0,"2025-11":5614552.0,"2025-12":1137515.0},"aff26":{"2026-01":2000121.0,"2026-02":6574959.0,"2026-03":5234284.0,"2026-04":6323132.0,"2026-05":15730417.0,"2026-06":10667792.0,"2026-07":5335533.0},"cs25":{"2025-01":550000.0,"2025-02":737535.0,"2025-03":379713.0,"2025-05":8713127.0,"2025-06":186386.0,"2025-07":750000.0,"2025-08":648030.0,"2025-09":3237856.0,"2025-10":2241878.0,"2025-11":842456.0,"2025-12":539847.0},"cs26":{"2026-01":1820073.0,"2026-02":1994192.0,"2026-03":2259604.0,"2026-04":4555118.0,"2026-05":1360119.0,"2026-06":4094063.0,"2026-07":515000.0}},"won_rev":{"aff25":{"2025-01":3433820.0,"2025-02":2929439.0,"2025-03":3101148.0,"2025-04":1867806.0,"2025-05":7172177.0,"2025-06":2601789.0,"2025-07":5762324.0,"2025-08":934568.0,"2025-09":3169502.0,"2025-10":2979555.0,"2025-11":2421090.0,"2025-12":4504561.0},"aff26":{"2026-01":4187311.0,"2026-02":2544167.0,"2026-03":3735182.0,"2026-04":5597476.0,"2026-05":6079939.0,"2026-06":4642362.0,"2026-07":210700.0},"cs25":{"2025-01":50000.0,"2025-02":43500.0,"2025-03":562875.0,"2025-04":238094.0,"2025-05":1045600.0,"2025-06":250280.0,"2025-07":233773.0,"2025-08":251781.0,"2025-09":421000.0,"2025-10":1115140.0,"2025-11":35581.0,"2025-12":1744443.0},"cs26":{"2026-01":2214365.0,"2026-02":250382.0,"2026-03":1520236.0,"2026-04":271600.0,"2026-05":632941.0,"2026-06":1216972.0,"2026-07":25000.0}},"won_count":{"aff25":{"2025-01":25,"2025-02":23,"2025-03":31,"2025-04":29,"2025-05":38,"2025-06":21,"2025-07":36,"2025-08":20,"2025-09":26,"2025-10":20,"2025-11":14,"2025-12":14},"aff26":{"2026-01":25,"2026-02":21,"2026-03":30,"2026-04":22,"2026-05":26,"2026-06":33,"2026-07":8},"cs25":{"2025-01":1,"2025-02":1,"2025-03":5,"2025-04":4,"2025-05":5,"2025-06":6,"2025-07":4,"2025-08":5,"2025-09":4,"2025-10":9,"2025-11":1,"2025-12":6},"cs26":{"2026-01":4,"2026-02":4,"2026-03":12,"2026-04":4,"2026-05":7,"2026-06":11,"2026-07":1}},"pipe_created_count":{"aff25":{"2025-01":7,"2025-02":2,"2025-03":6,"2025-04":1,"2025-05":13,"2025-06":9,"2025-07":4,"2025-08":7,"2025-09":10,"2025-10":14,"2025-11":16,"2025-12":9},"aff26":{"2026-01":13,"2026-02":24,"2026-03":28,"2026-04":32,"2026-05":50,"2026-06":53,"2026-07":23},"cs25":{"2025-01":3,"2025-02":2,"2025-03":3,"2025-05":7,"2025-06":2,"2025-07":1,"2025-08":6,"2025-09":10,"2025-10":14,"2025-11":8,"2025-12":3},"cs26":{"2026-01":12,"2026-02":6,"2026-03":13,"2026-04":17,"2026-05":11,"2026-06":24,"2026-07":2}},"pipe_close_count":{"aff25":{"2026-07":15,"2026-08":31,"2026-09":29,"2026-10":9,"2026-11":7,"2026-12":5,"2027-01":2},"aff26":{"2026-05":1,"2026-06":7,"2026-07":73,"2026-08":66,"2026-09":19,"2026-10":35,"2026-11":8,"2026-12":7,"2027-01":2,"2027-02":1,"2027-04":1,"2027-06":3},"cs25":{"2026-07":5,"2026-08":10,"2026-09":26,"2026-10":7,"2026-11":6,"2026-12":4,"2027-01":1},"cs26":{"2026-06":5,"2026-07":15,"2026-08":28,"2026-09":14,"2026-10":13,"2026-11":4,"2026-12":2,"2027-01":1,"2027-02":1,"2027-04":1,"2027-06":1}},"stage":{"aff25":{"10% - Identified":39,"25% - Qualified":36,"50% - Proposing":20,"75% - Positive Feedback":3},"aff26":{"10% - Identified":70,"25% - Qualified":65,"50% - Proposing":57,"75% - Positive Feedback":20,"90% - Verbal":7,"99% - Procurement Process":4},"cs25":{"10% - Identified":25,"25% - Qualified":24,"50% - Proposing":9,"75% - Positive Feedback":1},"cs26":{"10% - Identified":26,"25% - Qualified":34,"50% - Proposing":15,"75% - Positive Feedback":7,"90% - Verbal":2,"99% - Procurement Process":1}},"pipe_close_rev":{"aff25":{"2026-07":2458919.0,"2026-08":5235288.0,"2026-09":15536506.0,"2026-10":1225377.0,"2026-11":1068582.0,"2026-12":1300000.0,"2027-01":10000.0},"aff26":{"2026-05":320400.0,"2026-06":2039200.0,"2026-07":13197573.0,"2026-08":9907719.0,"2026-09":2138505.0,"2026-10":12419992.0,"2026-11":1402386.0,"2026-12":2133014.0,"2027-01":7510549.0,"2027-02":100000.0,"2027-04":120600.0,"2027-06":576300.0},"cs25":{"2026-07":617231.0,"2026-08":2090131.0,"2026-09":12648085.0,"2026-10":1241381.0,"2026-11":730000.0,"2026-12":1500000.0,"2027-01":0.0},"cs26":{"2026-06":1297000.0,"2026-07":3376905.0,"2026-08":4952081.0,"2026-09":1776378.0,"2026-10":2634180.0,"2026-11":1040653.0,"2026-12":800000.0,"2027-01":144072.0,"2027-02":100000.0,"2027-04":120600.0,"2027-06":356300.0}},"yoy_pipe_by_partner":[["Microsoft",34278606.0],["Google Cloud",15657400.0],["Amazon AWS",13607994.0],["SAP",12775288.0],["Databricks",5610799.0],["Confluent",1516600.0],["Snowflake",500000.0],["Cognition",100000.0],["Other",10000.0]],"yoy_won_by_partner":[["Microsoft",29304552.0],["Amazon AWS",24063137.0],["SAP",5487666.0],["Google Cloud",4451246.0],["Cognition",2604880.0],["Confluent",932415.0],["Databricks",840020.0],["Snowflake",442000.0]],"partner_rev":{"aff25":{"Amazon AWS":2350583.0,"Confluent":160000.0,"Databricks":100000.0,"Google Cloud":11130000.0,"Microsoft":7992087.0,"SAP":5052002.0,"Snowflake":50000.0},"aff26":{"Amazon AWS":11157411.0,"Cognition":100000.0,"Confluent":785600.0,"Databricks":3735799.0,"Google Cloud":3691420.0,"Microsoft":25852763.0,"Other":10000.0,"SAP":6233245.0,"Snowflake":300000.0},"cs25":{"Amazon AWS":250000.0,"Confluent":680000.0,"Databricks":600000.0,"Google Cloud":11390980.0,"Microsoft":1323846.0,"SAP":4582002.0},"cs26":{"Amazon AWS":1132000.0,"Cognition":100000.0,"Confluent":1086600.0,"Databricks":2649199.0,"Google Cloud":2423987.0,"Microsoft":5845825.0,"Other":10000.0,"SAP":2975558.0,"Snowflake":375000.0},"won_aff25":{"Amazon AWS":16344330.0,"Confluent":901815.0,"Databricks":198280.0,"Google Cloud":3052961.0,"Microsoft":16366767.0,"SAP":3815126.0,"Snowflake":198500.0},"won_aff26":{"Amazon AWS":7638807.0,"Cognition":2604880.0,"Databricks":641740.0,"Google Cloud":1348285.0,"Microsoft":12937785.0,"SAP":1582140.0,"Snowflake":243500.0},"won_cs25":{"Amazon AWS":276400.0,"Confluent":535680.0,"Google Cloud":1286361.0,"Microsoft":35000.0,"SAP":3815126.0,"Snowflake":43500.0},"won_cs26":{"Amazon AWS":80000.0,"Confluent":30600.0,"Databricks":1984540.0,"Google Cloud":266805.0,"Microsoft":2301790.0,"SAP":1224261.0,"Snowflake":243500.0}},"partner_count":{"aff25":{"Amazon AWS":15,"Confluent":3,"Databricks":1,"Google Cloud":15,"Microsoft":37,"SAP":26,"Snowflake":1},"aff26":{"Amazon AWS":14,"Cognition":1,"Confluent":2,"Databricks":14,"Google Cloud":22,"Microsoft":140,"Other":1,"SAP":26,"Snowflake":3},"cs25":{"Amazon AWS":1,"Confluent":6,"Databricks":2,"Google Cloud":17,"Microsoft":8,"SAP":25},"cs26":{"Amazon AWS":2,"Cognition":1,"Confluent":4,"Databricks":9,"Google Cloud":14,"Microsoft":35,"Other":1,"SAP":16,"Snowflake":3}},"yoy_aff_created_rev":[1359158.0,1208000.0,720274.0,2392920.0,2146878.0,5614552.0,1137515.0,2000121.0,6574959.0,5234284.0,6323132.0,15730417.0,10667792.0,5335533.0],"yoy_cs_created_rev":[186386.0,750000.0,648030.0,3237856.0,2241878.0,842456.0,539847.0,1820073.0,1994192.0,2259604.0,4555118.0,1360119.0,4094063.0,515000.0],"yoy_aff_created_cnt":[9,4,7,10,14,16,9,13,24,28,32,50,53,23],"yoy_cs_created_cnt":[2,1,6,10,14,8,3,12,6,13,17,11,24,2],"yoy_pipe_monthly":[1359158.0,1208000.0,864030.0,3392920.0,2486878.0,5634552.0,1298495.0,3401121.0,6699959.0,6509284.0,7075044.0,15759883.0,10776455.0,5335533.0],"yoy_won_monthly":[2601789.0,5762324.0,934568.0,3169502.0,2979555.0,2421090.0,4504561.0,4187311.0,2624167.0,3825582.0,5628076.0,6079939.0,4642362.0,210700.0],"msft_sa":{"sa_avg":98312,"nsa_avg":115250,"sa_deals":39,"nsa_deals":221,"won_sa_25":{"2025-05":226670.0,"2025-06":680000.0,"2025-08":15000.0,"2025-10":35000.0,"2025-12":98518.0},"won_sa_26":{"2026-01":87000.0,"2026-02":322353.0,"2026-03":1250211.0,"2026-04":51000.0,"2026-05":431560.0,"2026-06":578881.0,"2026-07":58000.0},"won_nsa_25":{"2025-01":1268872.0,"2025-02":803500.0,"2025-03":787273.0,"2025-04":697109.0,"2025-05":3177899.0,"2025-06":321434.0,"2025-07":2094752.0,"2025-08":268187.0,"2025-09":818089.0,"2025-10":679562.0,"2025-11":1750302.0,"2025-12":2644600.0},"won_nsa_26":{"2026-01":3377005.0,"2026-02":1444045.0,"2026-03":258294.0,"2026-04":1565592.0,"2026-05":2452810.0,"2026-06":1031034.0,"2026-07":30000.0}},"as_of":"2026-07-15"};
+const LOST_DATA = {"total_lost_rev":124568614.0,"total_lost_count":775,"by_partner_rev":{"Microsoft":54461116.0,"Amazon AWS":34123213.0,"Google Cloud":15653372.0,"SAP":10914712.0,"Confluent":5398960.0,"Databricks":3027240.0,"Snowflake":790001.0,"Other":200000.0},"by_partner_count":{"Microsoft":429,"Amazon AWS":134,"SAP":75,"Google Cloud":71,"Confluent":43,"Databricks":14,"Snowflake":8,"Other":1}};
+const LOST_MONTHLY = {"rev":{"2025-01":6454159.0,"2025-02":6154332.0,"2025-03":7043365.0,"2025-04":9515737.0,"2025-05":8345565.0,"2025-06":4411583.0,"2025-07":4991158.0,"2025-08":8936876.0,"2025-09":7842885.0,"2025-10":8589724.0,"2025-11":1863969.0,"2025-12":4574582.0,"2026-01":8652417.0,"2026-02":4598372.0,"2026-03":10077721.0,"2026-04":4681475.0,"2026-05":5468011.0,"2026-06":7693759.0,"2026-07":4672924.0},"count":{"2025-01":38,"2025-02":29,"2025-03":57,"2025-04":37,"2025-05":58,"2025-06":39,"2025-07":34,"2025-08":48,"2025-09":41,"2025-10":47,"2025-11":24,"2025-12":43,"2026-01":57,"2026-02":38,"2026-03":34,"2026-04":38,"2026-05":39,"2026-06":56,"2026-07":18}};
+const WIN_PM = {"data":{"Amazon AWS":{"2025-01":44.4,"2025-02":81.3,"2025-03":67.2,"2025-04":16.6,"2025-05":40.7,"2025-06":63.3,"2025-07":68.3,"2025-08":8.5,"2025-09":47.4,"2025-10":31.7,"2025-11":39.9,"2025-12":1.2,"2026-01":9.9,"2026-02":27.4,"2026-03":23.1,"2026-04":71.0,"2026-05":75.1,"2026-06":91.8,"2026-07":0.0},"Cognition":{"2026-04":100.0},"Confluent":{"2025-01":75.9,"2025-02":0.0,"2025-03":0.0,"2025-04":100.0,"2025-05":10.7,"2025-06":1.7,"2025-07":19.4,"2025-08":8.6,"2025-09":73.9,"2025-10":11.0,"2025-12":0.0,"2026-01":0.0,"2026-02":0.0,"2026-04":57.1,"2026-05":0.0},"Databricks":{"2025-04":100.0,"2025-07":0.0,"2025-09":100.0,"2025-12":0.0,"2026-01":11.6,"2026-03":0.0,"2026-04":66.0,"2026-05":20.6,"2026-06":100.0,"2026-07":0.0},"Google Cloud":{"2025-01":27.5,"2025-02":34.4,"2025-03":15.2,"2025-04":14.0,"2025-05":36.5,"2025-06":9.9,"2025-07":88.6,"2025-08":4.9,"2025-09":5.2,"2025-10":25.8,"2025-11":17.2,"2025-12":100.0,"2026-01":19.6,"2026-02":17.2,"2026-03":80.2,"2026-04":0.0,"2026-05":4.9,"2026-06":15.2,"2026-07":19.4},"Microsoft":{"2025-01":26.7,"2025-02":17.2,"2025-03":27.7,"2025-04":12.8,"2025-05":63.1,"2025-06":42.3,"2025-07":44.1,"2025-08":10.8,"2025-09":22.2,"2025-10":21.3,"2025-11":69.0,"2025-12":54.5,"2026-01":66.7,"2026-02":42.4,"2026-03":26.0,"2026-04":31.6,"2026-05":55.3,"2026-06":22.8,"2026-07":2.3},"SAP":{"2025-01":0.0,"2025-02":0.0,"2025-03":23.2,"2025-04":15.9,"2025-05":37.3,"2025-06":25.1,"2025-07":0.0,"2025-08":16.2,"2025-09":25.9,"2025-10":37.0,"2025-11":0.0,"2025-12":100.0,"2026-01":6.8,"2026-02":53.3,"2026-03":39.4,"2026-04":49.3,"2026-05":39.7,"2026-06":87.0,"2026-07":0.0},"Snowflake":{"2025-02":100.0,"2025-03":0.0,"2025-04":23.1,"2025-05":0.0,"2025-06":0.0,"2025-09":0.0,"2025-11":100.0,"2025-12":0.0,"2026-01":0.0,"2026-02":100.0,"2026-04":100.0}},"months":["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07"]};
 // ── WON TAB ───────────────────────────────────────────────────────────────────
 
 // ── GOALS TRACKER ────────────────────────────────────────────────────────────
@@ -570,7 +574,13 @@ function renderOverview(){
       <div class="chart-title">Top partners — won revenue (YoY)</div>
       <div style="position:relative;height:220px"><div id="ov-wp" style="width:100%;height:100%"></div></div>
     </div>
-  </div>`;
+  </div>
+  <div class="chart-full">
+    <div class="chart-title">Win % when a partner is tagged</div>
+    <div class="note">When a partner is tagged on a deal (co-sell or affiliated), this is how often it closes as a win — out of everything ever tagged with them, won, lost, or still open today. Example: "When Microsoft is tagged, they win 25% of the time." Cognition’s rate is on a small sample ($2.7M total) and not directly comparable to the larger partners.</div>
+    <div style="position:relative;height:260px"><div id="ov-winrate" style="width:100%;height:100%"></div></div>
+  </div>
+`;
 
   const YOY_KEYS_ALL = trailingMonths(MD.yoy_pipe_monthly.length);
   const YOY_MON = YOY_KEYS_ALL.map(mLabel);
@@ -581,6 +591,20 @@ function renderOverview(){
   barH('ov-pp',ppYOY.map(x=>x[0]),[{data:ppYOY.map(x=>x[1]),backgroundColor:'#378ADD',borderRadius:4}]);
   const wpYOY=MD.yoy_won_by_partner.filter(x=>x[0]!=='Unknown').slice(0,7);
   barH('ov-wp',wpYOY.map(x=>x[0]),[{data:wpYOY.map(x=>x[1]),backgroundColor:'#059669',borderRadius:4}]);
+
+  // True win rate by partner: won / (won + lost + open)
+  const pipeMap = Object.fromEntries(MD.yoy_pipe_by_partner);
+  const wonMap  = Object.fromEntries(MD.yoy_won_by_partner);
+  const lostMap = LOST_DATA.by_partner_rev;
+  const wrPartners = [...new Set([...Object.keys(pipeMap),...Object.keys(wonMap),...Object.keys(lostMap)])].filter(p=>p!=='Unknown'&&p!=='Other');
+  const winRates = wrPartners.map(p => {
+    const open=pipeMap[p]||0, won=wonMap[p]||0, lost=lostMap[p]||0;
+    const total = open+won+lost;
+    return {p, rate: total>0?Math.round(won/total*1000)/10:0, won, lost, open};
+  }).sort((a,b)=>b.rate-a.rate);
+  barH('ov-winrate', winRates.map(x=>x.p), [
+    {label:'Win rate', data:winRates.map(x=>x.rate), backgroundColor:'#F59E0B', borderRadius:4}
+  ], 'pct');
 
   // YoY keys: same trailing window as the overview charts above, for consistency
   const YOY_KEYS = YOY_KEYS_ALL;
@@ -774,6 +798,16 @@ function renderWonTab(){
   <div class="charts-grid">
     <div class="chart-card"><div class="chart-title">2026 won by partner — all channels</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
     <div class="chart-card"><div class="chart-title">2025 won by partner — all channels (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-title">Win % when a partner is tagged</div>
+    <div class="note">When a partner is tagged on a deal (co-sell or affiliated), this is how often it closes as a win — out of everything ever tagged with them, won, lost, or still open today. Example: "When Microsoft is tagged, they win 25% of the time." Cognition’s rate is on a small sample ($2.7M total) and not directly comparable to the larger partners.</div>
+    <div style="position:relative;height:260px"><div id="won-winrate" style="width:100%;height:100%"></div></div>
+  </div>
+  <div class="chart-full">
+    <div class="chart-title">Win % by partner and month</div>
+    <div class="note">Won ÷ (Won + Lost) for deals actually closed that month, per partner — blank cells mean no closed activity that month</div>
+    <div id="won-heatmap" style="overflow-x:auto"></div>
   </div>`;
 
   // Build 2025 and 2026 won series (all months Jan-Dec for each year)
@@ -805,6 +839,52 @@ function renderWonTab(){
   const wp25=Object.entries(MD.partner_rev.won_aff25).sort((a,b)=>b[1]-a[1]).slice(0,8);
   barH('won-pa26',wp26.map(x=>x[0]),[{data:wp26.map(x=>x[1]),backgroundColor:'#059669'}]);
   barH('won-pa25',wp25.map(x=>x[0]),[{data:wp25.map(x=>x[1]),backgroundColor:'#93C5FD'}]);
+
+  // True win rate by partner: won / (won + lost + open) — same calc as Overview tab
+  const wr_pipeMap = Object.fromEntries(MD.yoy_pipe_by_partner);
+  const wr_wonMap  = Object.fromEntries(MD.yoy_won_by_partner);
+  const wr_lostMap = LOST_DATA.by_partner_rev;
+  const wr_partners = [...new Set([...Object.keys(wr_pipeMap),...Object.keys(wr_wonMap),...Object.keys(wr_lostMap)])].filter(p=>p!=='Unknown'&&p!=='Other');
+  const wr_rates = wr_partners.map(p => {
+    const open=wr_pipeMap[p]||0, won=wr_wonMap[p]||0, lost=wr_lostMap[p]||0;
+    const total = open+won+lost;
+    return {p, rate: total>0?Math.round(won/total*1000)/10:0};
+  }).sort((a,b)=>b.rate-a.rate);
+  barH('won-winrate', wr_rates.map(x=>x.p), [
+    {label:'Win rate', data:wr_rates.map(x=>x.rate), backgroundColor:'#F59E0B', borderRadius:4}
+  ], 'pct');
+
+  // Win % heatmap by partner and month
+  (function renderWinHeatmap(){
+    const months = WIN_PM.months;
+    const partners = Object.keys(WIN_PM.data).sort((a,b)=>{
+      const totA = months.reduce((s,m)=>s+(WIN_PM.data[a][m]!==undefined?1:0),0);
+      const totB = months.reduce((s,m)=>s+(WIN_PM.data[b][m]!==undefined?1:0),0);
+      return totB-totA;
+    });
+    function heatColor(v){
+      if(v===undefined) return {bg:'#fafaf8',color:'#D3D1C7',txt:'—'};
+      const intensity = v/100;
+      const bg = v>=50 ? `rgba(15,110,86,${0.15+intensity*0.55})` : `rgba(217,83,79,${0.15+(1-intensity)*0.45})`;
+      const color = intensity>0.65||intensity<0.25 ? '#fff' : '#1a1a18';
+      return {bg,color,txt:v+'%'};
+    }
+    let h = '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr>';
+    h += '<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #D3D1C7;color:#888780;font-size:10px;text-transform:uppercase;white-space:nowrap">Partner</th>';
+    months.forEach(m => h += `<th style="text-align:center;padding:6px 6px;border-bottom:2px solid #D3D1C7;color:#888780;font-size:10px;white-space:nowrap">${mLabel(m)}</th>`);
+    h += '</tr></thead><tbody>';
+    partners.forEach(p => {
+      h += `<tr><td style="padding:6px 8px;border:1px solid #EEEDEA;font-weight:600;white-space:nowrap">${p}</td>`;
+      months.forEach(m => {
+        const v = WIN_PM.data[p][m];
+        const c = heatColor(v);
+        h += `<td style="background:${c.bg};color:${c.color};text-align:center;padding:6px 6px;font-weight:600;border:1px solid #EEEDEA">${c.txt}</td>`;
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    document.getElementById('won-heatmap').innerHTML = h;
+  })();
 
   // ── Microsoft Sales Assist section ──────────────────────────────────────────
   const wonEl = document.getElementById('tab-won');
