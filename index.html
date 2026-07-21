@@ -405,8 +405,8 @@ const GOALS_DEFAULTS = [
   {id:'g_pipe_total', label:'Total pipeline created', metric:'pipe_2026_ytd', fmt:'$', target:177781346,  sub:'2025 (open+won+lost): $148.2M · goal: +20%', base2025:148151122},
   {id:'g_won_total',  label:'Won revenue',            metric:'won_2026_ytd',  fmt:'$', target:49113335,  sub:'2025 full year: $40.9M · goal: +20%', base2025:40927779},
   {id:'g_won_deals',  label:'Won deals',              metric:'won_2026_deals',fmt:'#', target:358,  sub:'2025 full year: 298 deals · goal: +20%', base2025:298},
-  {id:'g_aff_pipe',   label:'Affiliated pipeline',    metric:'aff_2026_ytd',  fmt:'$', target:173465822,  sub:'2025 (open+won+lost): $144.6M · goal: +20%', base2025:144554852},
-  {id:'g_cs_pipe',    label:'Co-sell pipeline',       metric:'cs_2026_ytd',   fmt:'$', target:60553904,  sub:'2025 (open+won+lost): $50.5M · goal: +20% · overlaps with affiliated', base2025:50461587},
+  {id:'g_aff_pipe',   label:'Affiliated pipeline',    metric:'aff_2026_ytd',  fmt:'$', target:173465822,  sub:'New deals only, not extensions · 2025 (open+won+lost): $144.6M · goal: +20%', base2025:144554852},
+  {id:'g_cs_pipe',    label:'Co-sell pipeline',       metric:'cs_2026_ytd',   fmt:'$', target:60553904,  sub:'New deals only, not extensions · 2025 (open+won+lost): $50.5M · goal: +20% · overlaps with affiliated', base2025:50461587},
   {id:'g_open_raw',   label:'Open pipeline (current)',metric:'open_raw',      fmt:'$', target:150000000, sub:'Live snapshot · no 2025 baseline', base2025:null},
   {id:'g_open_wtd',   label:'Weighted pipeline',      metric:'open_wtd',      fmt:'$', target:50000000,  sub:'Probability-adjusted · no 2025 baseline', base2025:null},
   {id:'g_contacts',   label:'Partner rep contacts',   metric:'contacts_ytd',  fmt:'#', target:500,        sub:'2025 full year: 366 · 2026 target: 500 (fixed)', base2025:366},
@@ -556,7 +556,7 @@ function renderOverview(){
   </div>
   <div class="chart-full">
     <div class="chart-header">
-      <div class="chart-title">Affiliated vs co-sell — Jul 2025 to Jul 2026</div><div class="note" style="margin-top:-4px;margin-bottom:8px">Channels overlap — most co-sell deals are also affiliated-tagged, so bars won't sum to total pipeline</div>
+      <div class="chart-title">Affiliated vs co-sell — Jul 2025 to Jul 2026</div><div class="note" style="margin-top:-4px;margin-bottom:8px">New deals only, not extensions or renewals. Channels overlap — most co-sell deals are also affiliated-tagged, so bars won't sum to total pipeline</div>
       <div class="tog-row">
         <button class="tog on" id="ov-tr-pip" onclick="togOvTrend('pipeline')">Pipeline created</button>
         <button class="tog" id="ov-tr-won" onclick="togOvTrend('won')">Won revenue</button>
@@ -696,7 +696,7 @@ function renderPipeTab(type){
         <button class="tog" id="${type}-cr-c" onclick="togPCreated('${type}','count')">Deal count</button>
       </div>
     </div>
-    <div class="note">Jul 2025 – Jul 2026 · all periods</div>
+    <div class="note">New deals only, not extensions or renewals · Jul 2025 – Jul 2026 · all periods</div>
     <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>2025</span><span><span class="ld" style="background:#378ADD"></span>2026</span></div>
     <div style="position:relative;height:260px"><div id="${type}-created" style="width:100%;height:100%"></div></div>
   </div>
@@ -708,18 +708,20 @@ function renderPipeTab(type){
         <button class="tog" id="${type}-cl-c" onclick="togPClose('${type}','count')">Deal count</button>
       </div>
     </div>
-    <div class="note">Open deals by expected close month</div>
+    <div class="note">New deals only, not extensions or renewals · Open deals by expected close month</div>
     <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>2025</span><span><span class="ld" style="background:#378ADD"></span>2026</span></div>
     <div style="position:relative;height:260px"><div id="${type}-close" style="width:100%;height:100%"></div></div>
   </div>
   <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-title">${label} revenue by partner</div>
+      <div class="note">New deals only, not extensions or renewals</div>
       <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>2025</span><span><span class="ld" style="background:#378ADD"></span>2026</span></div>
       <div style="position:relative;height:${phH}px"><div id="${type}-pr" style="width:100%;height:100%"></div></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">${label} deal count by partner</div>
+      <div class="note">New deals only, not extensions or renewals</div>
       <div class="legend"><span><span class="ld" style="background:#93C5FD"></span>2025</span><span><span class="ld" style="background:#378ADD"></span>2026</span></div>
       <div style="position:relative;height:${phH}px"><div id="${type}-pc" style="width:100%;height:100%"></div></div>
     </div>
@@ -812,17 +814,17 @@ function renderWonTab(){
     <div style="position:relative;height:230px"><div id="won-monthly" style="width:100%;height:100%"></div></div>
   </div>
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">2026 won by partner — all channels</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
-    <div class="chart-card"><div class="chart-title">2025 won by partner — all channels (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2026 won by partner — Affiliated + Co-sell combined</div><div style="position:relative;height:260px"><div id="won-pa26" style="width:100%;height:100%"></div></div></div>
+    <div class="chart-card"><div class="chart-title">2025 won by partner — Affiliated + Co-sell combined (full year)</div><div style="position:relative;height:260px"><div id="won-pa25" style="width:100%;height:100%"></div></div></div>
   </div>
   <div class="chart-full">
     <div class="chart-title">Win % when a partner is tagged</div>
-    <div class="note">When a partner is tagged on a deal (co-sell or affiliated), this is how often it closes as a win — out of everything ever tagged with them, won, lost, or still open today. Example: "When Microsoft is tagged, they win 25% of the time." Cognition’s rate is on a small sample ($2.7M total) and not directly comparable to the larger partners.</div>
+    <div class="note">Affiliated + Co-sell combined. When a partner is tagged on a deal (co-sell or affiliated), this is how often it closes as a win — out of everything ever tagged with them, won, lost, or still open today. Example: "When Microsoft is tagged, they win 25% of the time." Cognition’s rate is on a small sample ($2.7M total) and not directly comparable to the larger partners.</div>
     <div style="position:relative;height:260px"><div id="won-winrate" style="width:100%;height:100%"></div></div>
   </div>
   <div class="chart-full">
     <div class="chart-title">Win % by partner and month</div>
-    <div class="note">Won ÷ (Won + Lost) for deals actually closed that month, per partner — blank cells mean no closed activity that month</div>
+    <div class="note">Affiliated + Co-sell combined. Won ÷ (Won + Lost) for deals actually closed that month, per partner — blank cells mean no closed activity that month</div>
     <div id="won-heatmap" style="overflow-x:auto"></div>
   </div>`;
 
@@ -908,7 +910,8 @@ function renderWonTab(){
   // Add SA chart card HTML
   const saDiv = document.createElement('div');
   saDiv.innerHTML =
-    '<div class="charts-grid" style="margin-top:1.25rem">' +
+    '<div class="note" style="margin-top:1.25rem">Affiliated + Co-sell combined — Microsoft won deals across both channels</div>' +
+    '<div class="charts-grid" style="margin-top:.5rem">' +
       '<div class="chart-card">' +
         '<div class="chart-title">Sales Assist — Won Revenue by Month (2025)</div>' +
         '<div class="note">Full year 2025 · SA field sparsely populated in 2025</div>' +
